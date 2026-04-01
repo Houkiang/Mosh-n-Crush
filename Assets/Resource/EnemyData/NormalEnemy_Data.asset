@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb5f1bd877bd94e458721ca8ae2bfffa, type: 3}
+  m_Name: NormalEnemy_Data
+  m_EditorClassIdentifier: 
+  enemyPrefab: {fileID: 5550575923098641747, guid: 5e63a677ff5825a43935658f6779c1dc, type: 3}
+  enemyType: 0
+  enemyName: NormalEnemy
+  baseMaxHealth: 10
+  baseDamage: 4
+  baseMoveSpeed: 3
+  baseDefanse: 2
+  experienceReward: 2
+  dropPrefab: {fileID: 8984726673366908729, guid: 6d40108ac4508401c8f6be150546e66a, type: 3}

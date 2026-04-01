@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0518cddfaff84468997ba2f803c0913, type: 3}
+  m_Name: Wave_1_Normal
+  m_EditorClassIdentifier: 
+  waveType: 0
+  initialSpawnCount: 100
+  spawnInterval: 0.05
+  waveDuration: 45
+  bossUnit: {fileID: 0}
+  enemies:
+  - enemyData: {fileID: 11400000, guid: 8309874480709412e8db46639fe6ba9c, type: 2}
+    weight: 27

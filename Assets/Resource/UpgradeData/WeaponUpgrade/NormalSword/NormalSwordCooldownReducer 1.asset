@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2274731f5eace4b8f89b4c374cea104a, type: 3}
+  m_Name: NormalSwordCooldownReducer 1
+  m_EditorClassIdentifier: 
+  upgradeName: "\u5251\u672F I"
+  icon: {fileID: 0}
+  description: "\u666E\u901A\u653B\u51FB\u51B7\u5374 -0.2s"
+  weight: 80
+  upgradeType: 1
+  weaponDataSO: {fileID: 11400000, guid: bb70d80aa544745789c6320b104a3497, type: 2}
+  value: 0.2

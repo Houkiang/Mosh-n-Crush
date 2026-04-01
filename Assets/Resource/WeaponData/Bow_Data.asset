@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c49c19cf1c76461083100042b43a35f, type: 3}
+  m_Name: Bow_Data
+  m_EditorClassIdentifier: 
+  weaponName: PenetratingBow
+  weaponPrefab: {fileID: 648116540973858597, guid: a6fc86480acb5425b807f8e1689698fa, type: 3}
+  weaponModelPrefab: {fileID: 0}
+  modelOffset: {x: 0, y: 1, z: 0.5}
+  swingDuration: 0.2
+  projectilePrefab: {fileID: 5094986509317300970, guid: a276d050c2c9e40d7ab27f29ef484acf, type: 3}
+  projectileSpeed: 25
+  projectileLifeTime: 5
+  weaponCount: 1
+  damage: 8
+  cooldown: 1.5
+  knockbackForce: 60
+  knockbackDuration: 0.4
+  attackRange: 3
+  attackAngle: 180

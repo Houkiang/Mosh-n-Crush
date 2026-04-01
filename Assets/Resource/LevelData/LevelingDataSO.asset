@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4414b1cb7d764976b6ee9ac71b53429, type: 3}
+  m_Name: LevelingDataSO
+  m_EditorClassIdentifier: 
+  experienceCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.18725586
+      value: 0.15640259
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.015040576
+      value: 0.16235536
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 5
+      inSlope: 3.3288324
+      outSlope: 3.3288324
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.27900326
+    - serializedVersion: 3
+      time: 9.722626
+      value: 47.17093
+      inSlope: 7.9589624
+      outSlope: 7.9589624
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.23302858
+      outWeight: 0.2992108
+    - serializedVersion: 3
+      time: 18.994402
+      value: 140.75038
+      inSlope: 16.917166
+      outSlope: 16.917166
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.24314623
+      outWeight: 0.13556238
+    - serializedVersion: 3
+      time: 29.630188
+      value: 364.16498
+      inSlope: 19.955599
+      outSlope: 19.955599
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.19241457
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  maxLevel: 100

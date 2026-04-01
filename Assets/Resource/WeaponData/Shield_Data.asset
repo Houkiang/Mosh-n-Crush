@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c49c19cf1c76461083100042b43a35f, type: 3}
+  m_Name: Shield_Data
+  m_EditorClassIdentifier: 
+  weaponName: Shield
+  weaponPrefab: {fileID: 5430623295200657101, guid: a896a8f7e4d2e438eb1edca7d1b8403f, type: 3}
+  weaponModelPrefab: {fileID: 1382468266347395478, guid: e77dd220249404c7d97d389eded07cc7, type: 3}
+  modelOffset: {x: 0, y: 1, z: 0.5}
+  swingDuration: 0.2
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 10
+  projectileLifeTime: 5
+  weaponCount: 1
+  damage: 5
+  cooldown: 3
+  knockbackForce: 45
+  knockbackDuration: 0.6
+  attackRange: 3
+  attackAngle: 180

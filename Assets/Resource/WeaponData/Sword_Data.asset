@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c49c19cf1c76461083100042b43a35f, type: 3}
+  m_Name: Sword_Data
+  m_EditorClassIdentifier: 
+  weaponName: NormalSword
+  weaponPrefab: {fileID: 5860680642071854154, guid: ff97e00a3a3db466ca4a5da51d90bd3a, type: 3}
+  weaponModelPrefab: {fileID: 9102280050811140149, guid: 222f91149adf2aa42bd2be71c9193c99, type: 3}
+  modelOffset: {x: 0, y: 2, z: 0.5}
+  swingDuration: 0.2
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 10
+  projectileLifeTime: 5
+  weaponCount: 1
+  damage: 7
+  cooldown: 2.5
+  knockbackForce: 60
+  knockbackDuration: 0.8
+  attackRange: 8
+  attackAngle: 180

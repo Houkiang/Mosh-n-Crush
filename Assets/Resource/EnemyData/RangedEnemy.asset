@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb5f1bd877bd94e458721ca8ae2bfffa, type: 3}
+  m_Name: RangedEnemy
+  m_EditorClassIdentifier: 
+  enemyPrefab: {fileID: 5622809594221243363, guid: 7ebe4477a84d79e4ebd402d1e27e5ebc, type: 3}
+  enemyType: 0
+  enemyName: RangedEnemy
+  baseMaxHealth: 30
+  baseDamage: 8
+  baseMoveSpeed: 2.5
+  baseDefanse: 3
+  experienceReward: 4
+  dropPrefab: {fileID: 8984726673366908729, guid: 6d40108ac4508401c8f6be150546e66a, type: 3}
