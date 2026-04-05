@@ -70,14 +70,35 @@
 - `Assets/Scripts/Camera/CameraFollow.cs`
 - `Assets/Scripts/UI/GameHUD.cs`
 
-执行内容：
-- 建立 `NetworkManager` 启动流程（Dedicated Server/Client）
-- `PlayerController` 只允许 Owner 读取输入
-- 玩家位置先用 `NetworkTransform` 同步，后续再精调插值
-- 本地相机/HUD 只绑定本地玩家
+执行内容（拆分 B1~B6，可独立验收）：
+- `B1` 网络底座可启动：完成 `NetworkManager` 启动流程（Dedicated Server/Client）。
+- `B2` 网络玩家最小原型：建立 NetworkPlayer 生成/销毁与 Owner 归属校验。
+- `B3` 输入所有权接入：`PlayerController` 仅 Owner 读取输入。
+- `B4` 位姿同步：先接 `NetworkTransform`，再按观感调基础平滑。
+- `B5` 本地相机/HUD 归属：`CameraFollow/GameHUD/Joystick` 仅绑定本地玩家。
+- `B6` 会话状态最小同步：同步 GameState/基础会话状态并驱动 UI 切换。
 
-完成标准：
-- 两端可稳定看到双方移动，且远端玩家不读取本地输入
+完成标准（模块化）：
+- B1 通过：DS 启动 + Client 连接/断开稳定。
+- B2 通过：多人入场实体与 Owner 归属正确。
+- B3 通过：只有本地玩家可控制自己角色。
+- B4 通过：双端位姿同步无明显异常抖动。
+- B5 通过：相机与 HUD 不串号。
+- B6 通过：会话状态跨端一致可观测。
+
+`B1` 本地启动方式（开发环境）：
+- 命令行 Dedicated Server：`-batchmode -nographics -hklServer -ip 127.0.0.1 -port 7777`
+- 命令行 Client：`-hklClient -ip 127.0.0.1 -port 7777`
+- 编辑器内也可用左上角 `B1 Netcode Bootstrap` 面板手动点击 `Start Dedicated Server / Start Client`。
+
+`B1` 验收日志观察点（建议固定执行）：
+- 服务端必看：`[B1] Launch args parsed => mode=DedicatedServer`
+- 服务端必看：`[B1] StartServer result => True`
+- 客户端必看：`[B1] Launch args parsed => mode=Client`
+- 客户端必看：`[B1] StartClient result => True`
+- 连接事件：`[B1] Event => OnClientConnectedCallback`
+- 断开事件：`[B1] Event => OnClientDisconnectCallback`
+- 异常事件：`[B1] Event => OnTransportFailure`（出现即判失败）
 
 ### Phase C：战斗与刷怪权威化（核心）
 
@@ -147,8 +168,14 @@ Client 负责：
 3. 阶段 3（移动端 10人）：再扩大到 10 人并做高并发压力验证。
 4. 每阶段都执行：单机回归 + 跨端一致性回归 + 网络抖动场景回归。
 
-## 8. 当前建议的下一步（先确认，不实施）
+## 8. 当前建议的下一步（实施中）
 
-- 按“逐步确认”节奏先锁定方案分歧项（网络框架、经验分配、升级暂停策略、失败条件）。
-- 在确认前不进入任何联机代码改造，只维护文档与决策记录。
-- 全部确认后，再输出“实施版 Context（含具体提交批次）”。
+- 直接进入 `B2`：网络玩家最小原型（生成、销毁、Owner 归属）。
+- 每完成一个 B 模块就做一次短回归并更新清单勾选状态。
+
+## 9. 当前开发进度
+
+- Phase A：已完成（重复加分修复 + 去全局停时 + 死亡结算顺序收敛）。
+- Phase B：
+  - `B1` 已完成并已验收通过（NGO/Transport 入包 + 运行时 Netcode 启动底座 + 本地 DS/Client 启动入口 + 断开后重连验证通过）。
+  - 下一步：`B2` 网络玩家最小原型。

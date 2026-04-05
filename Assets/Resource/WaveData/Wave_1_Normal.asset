@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Wave_1_Normal
   m_EditorClassIdentifier: 
   waveType: 0
-  initialSpawnCount: 100
-  spawnInterval: 0.05
+  initialSpawnCount: 5
+  spawnInterval: 1
   waveDuration: 45
   bossUnit: {fileID: 0}
   enemies:
