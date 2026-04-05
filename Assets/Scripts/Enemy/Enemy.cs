@@ -32,6 +32,7 @@ public class Enemy : MonoBehaviour, IDamageable
     void Awake()
     {
         movement = GetComponent<EnemyMovement>();
+        enemyCollider = GetComponent<Collider>();
     }
 
     void OnEnable()
@@ -101,13 +102,8 @@ public class Enemy : MonoBehaviour, IDamageable
         // 1. 立即禁用碰撞体，防止尸体挡路
         if (enemyCollider != null) enemyCollider.enabled = false;
 
-        // 2. 处理加分等逻辑
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.AddScore(enemyData.experienceReward);
-        }
-        
-        // 3. 通知外部（如 Animator）我死了
+        // 2. 通知外部（Spawner/Drop/UI/Score）统一处理结算
+        // 注意：计分由 GameManager 监听 OnEnemyKilled 统一执行，避免重复加分。
         OnEnemyKilled?.Invoke(this); 
 
     }

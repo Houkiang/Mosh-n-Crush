@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class UpgradeManager : MonoBehaviour
 {
+    private const string PauseReasonUpgrade = "UpgradeSelection";
+
     [Header("引用")]
     [SerializeField] private Player player;
     [SerializeField] private WeaponManager weaponManager;
@@ -24,12 +26,13 @@ public class UpgradeManager : MonoBehaviour
     private void OnDestroy()
     {
         if (player != null) player.OnLevelUp -= HandleLevelUp;
+        if (GameManager.Instance != null) GameManager.Instance.ReleasePause(PauseReasonUpgrade);
     }
 
     private void HandleLevelUp(int level)
     {
-        //  暂停游戏
-        Time.timeScale = 0f; 
+        // 逻辑暂停（不使用全局 Time.timeScale）
+        if (GameManager.Instance != null) GameManager.Instance.RequestPause(PauseReasonUpgrade);
         upgradePanel.SetActive(true);
 
         //  获取随机增益
@@ -55,9 +58,9 @@ public class UpgradeManager : MonoBehaviour
         //  应用增益
         upgrade.Apply(player);
 
-        //  恢复游戏
+        // 恢复逻辑
         upgradePanel.SetActive(false);
-        Time.timeScale = 1f;
+        if (GameManager.Instance != null) GameManager.Instance.ReleasePause(PauseReasonUpgrade);
     }
 
     // 筛选并随机抽取

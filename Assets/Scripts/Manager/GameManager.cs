@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -20,6 +20,9 @@ public class GameManager : MonoBehaviour
     // 事件通知
     public event Action<GameState> OnGameStateChanged;
     public event Action<int> OnScoreChanged;
+    
+    // 逻辑暂停来源（例如升级面板）
+    private readonly HashSet<string> pauseReasons = new HashSet<string>();
 
     void Awake()
     {
@@ -50,7 +53,6 @@ public class GameManager : MonoBehaviour
         {
             gameTime += Time.deltaTime;
         }
-        Debug.Log("当前分数: " + currentScore);
     }
     void OnEnable()
     {
@@ -77,12 +79,14 @@ public class GameManager : MonoBehaviour
         gameTime = 0f;
         currentScore = 0;
         killCount = 0;
+        pauseReasons.Clear();
         ChangeState(GameState.Playing);
     }
 
     public void GameOver()
     {
         if (CurrentState == GameState.GameOver) return;
+        pauseReasons.Clear();
         ChangeState(GameState.GameOver);
         Debug.Log($"游戏结束! 得分: {currentScore}");
     }
@@ -94,10 +98,36 @@ public class GameManager : MonoBehaviour
         OnScoreChanged?.Invoke(currentScore);
     }
 
+    public void RequestPause(string reason)
+    {
+        if (CurrentState == GameState.GameOver) return;
+        if (string.IsNullOrWhiteSpace(reason)) reason = "Unknown";
+
+        pauseReasons.Add(reason);
+        RefreshPauseState();
+    }
+
+    public void ReleasePause(string reason)
+    {
+        if (CurrentState == GameState.GameOver) return;
+        if (string.IsNullOrWhiteSpace(reason)) reason = "Unknown";
+
+        pauseReasons.Remove(reason);
+        RefreshPauseState();
+    }
+
+    private void RefreshPauseState()
+    {
+        GameState targetState = pauseReasons.Count > 0 ? GameState.Paused : GameState.Playing;
+        if (CurrentState != targetState)
+        {
+            ChangeState(targetState);
+        }
+    }
+
     private void ChangeState(GameState newState)
     {
         CurrentState = newState;
         OnGameStateChanged?.Invoke(newState);
-        Time.timeScale = (newState == GameState.Paused || newState == GameState.GameOver) ? 0f : 1f;
     }
 }
