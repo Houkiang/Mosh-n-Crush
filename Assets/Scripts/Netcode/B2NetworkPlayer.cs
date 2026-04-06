@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,7 +13,16 @@ public class B2NetworkPlayer : NetworkBehaviour
     [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float rotateSpeed = 12f;
 
+    [Header("B4 位姿同步与基础平滑")]
+    [SerializeField] private float serverInputSmoothing = 14f;
+    [SerializeField] private float positionThreshold = 0.015f;
+    [SerializeField] private float rotationThreshold = 0.6f;
+    [SerializeField] private bool enableSlerpPosition = true;
+
     private bool ownerInputEnabled;
+    private NetworkTransform networkTransform;
+    private Vector2 serverTargetInput;
+    private Vector2 serverAppliedInput;
 
     public void SetSpawnRule(Vector3 origin, float spacing)
     {
@@ -28,6 +38,8 @@ public class B2NetworkPlayer : NetworkBehaviour
         }
 
         ownerInputEnabled = IsOwner;
+        networkTransform = GetComponent<NetworkTransform>();
+        ConfigureNetworkTransform();
         Debug.Log($"[B3] Input ownership => owner={OwnerClientId}, local={NetworkManager.LocalClientId}, inputEnabled={ownerInputEnabled}");
 
         Debug.Log(
@@ -41,10 +53,25 @@ public class B2NetworkPlayer : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (!IsSpawned || !ownerInputEnabled) return;
+        if (!IsSpawned) return;
 
-        Vector2 input = ReadMoveInput();
-        SubmitMoveInputServerRpc(input, Time.fixedDeltaTime);
+        if (ownerInputEnabled)
+        {
+            Vector2 input = ReadMoveInput();
+            if (IsServer)
+            {
+                serverTargetInput = input;
+            }
+            else
+            {
+                SubmitMoveInputServerRpc(input);
+            }
+        }
+
+        if (IsServer)
+        {
+            RunServerAuthoritativeMovement(Time.fixedDeltaTime);
+        }
     }
 
     private Vector3 ComputeSpawnPosition(ulong ownerClientId)
@@ -56,22 +83,27 @@ public class B2NetworkPlayer : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void SubmitMoveInputServerRpc(Vector2 input, float deltaTime, ServerRpcParams rpcParams = default)
+    private void SubmitMoveInputServerRpc(Vector2 input, ServerRpcParams rpcParams = default)
     {
         if (rpcParams.Receive.SenderClientId != OwnerClientId) return;
 
-        Vector3 move = new Vector3(input.x, 0f, input.y);
-        if (move.sqrMagnitude > 1f)
-        {
-            move.Normalize();
-        }
+        serverTargetInput = Vector2.ClampMagnitude(input, 1f);
+    }
 
+    private void RunServerAuthoritativeMovement(float deltaTime)
+    {
+        float t = 1f - Mathf.Exp(-Mathf.Max(1f, serverInputSmoothing) * Mathf.Max(0f, deltaTime));
+        serverAppliedInput = Vector2.Lerp(serverAppliedInput, serverTargetInput, t);
+        serverAppliedInput = Vector2.ClampMagnitude(serverAppliedInput, 1f);
+
+        Vector3 move = new Vector3(serverAppliedInput.x, 0f, serverAppliedInput.y);
         if (move.sqrMagnitude < 0.0001f) return;
 
-        transform.position += move * moveSpeed * Mathf.Max(0f, deltaTime);
+        float dt = Mathf.Max(0f, deltaTime);
+        transform.position += move * moveSpeed * dt;
 
-        Quaternion targetRotation = Quaternion.LookRotation(move, Vector3.up);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * Mathf.Max(0f, deltaTime));
+        Quaternion targetRotation = Quaternion.LookRotation(move.normalized, Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * dt);
     }
 
     private static Vector2 ReadMoveInput()
@@ -94,5 +126,20 @@ public class B2NetworkPlayer : NetworkBehaviour
         }
 
         return Vector2.ClampMagnitude(new Vector2(x, y), 1f);
+    }
+
+    private void ConfigureNetworkTransform()
+    {
+        if (networkTransform == null) return;
+
+        networkTransform.Interpolate = true;
+        networkTransform.SlerpPosition = enableSlerpPosition;
+        networkTransform.InLocalSpace = false;
+        networkTransform.UseHalfFloatPrecision = false;
+        networkTransform.PositionThreshold = Mathf.Max(0.001f, positionThreshold);
+        networkTransform.RotAngleThreshold = Mathf.Max(0.01f, rotationThreshold);
+
+        Debug.Log(
+            $"[B4] Sync config => owner={OwnerClientId}, serverAuth={networkTransform.IsServerAuthoritative()}, interpolate={networkTransform.Interpolate}, slerpPos={networkTransform.SlerpPosition}, posThreshold={networkTransform.PositionThreshold}, rotThreshold={networkTransform.RotAngleThreshold}");
     }
 }
