@@ -1,9 +1,10 @@
 using Unity.Netcode;
 using Unity.Netcode.Components;
+using PinePie.SimpleJoystick;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class B2NetworkPlayer : NetworkBehaviour
+public class NetworkPlayerController : NetworkBehaviour
 {
     [Header("B2 仅用于验证生成与 Owner")]
     [SerializeField] private Vector3 spawnOrigin = new Vector3(0f, 1f, 0f);
@@ -18,11 +19,14 @@ public class B2NetworkPlayer : NetworkBehaviour
     [SerializeField] private float positionThreshold = 0.015f;
     [SerializeField] private float rotationThreshold = 0.6f;
     [SerializeField] private bool enableSlerpPosition = true;
+    [SerializeField] private bool useServerRigidbodyMovement = true;
 
     private bool ownerInputEnabled;
     private NetworkTransform networkTransform;
     private Vector2 serverTargetInput;
     private Vector2 serverAppliedInput;
+    private JoystickController cachedJoystick;
+    private Rigidbody cachedRigidbody;
 
     public void SetSpawnRule(Vector3 origin, float spacing)
     {
@@ -39,11 +43,18 @@ public class B2NetworkPlayer : NetworkBehaviour
 
         ownerInputEnabled = IsOwner;
         networkTransform = GetComponent<NetworkTransform>();
+        cachedRigidbody = GetComponent<Rigidbody>();
         ConfigureNetworkTransform();
+        ConfigureRigidbodyOwnership();
         Debug.Log($"[B3] Input ownership => owner={OwnerClientId}, local={NetworkManager.LocalClientId}, inputEnabled={ownerInputEnabled}");
 
         Debug.Log(
             $"[B2] NetworkPlayer spawned => netId={NetworkObjectId}, owner={OwnerClientId}, local={NetworkManager.LocalClientId}, isOwner={IsOwner}, isServer={IsServer}, isClient={IsClient}, pos={transform.position}");
+
+        if (IsOwner)
+        {
+            LocalPresentationBinder.NotifyLocalOwnerSpawned(NetworkObject);
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -97,17 +108,49 @@ public class B2NetworkPlayer : NetworkBehaviour
         serverAppliedInput = Vector2.ClampMagnitude(serverAppliedInput, 1f);
 
         Vector3 move = new Vector3(serverAppliedInput.x, 0f, serverAppliedInput.y);
-        if (move.sqrMagnitude < 0.0001f) return;
 
-        float dt = Mathf.Max(0f, deltaTime);
-        transform.position += move * moveSpeed * dt;
+        if (useServerRigidbodyMovement && cachedRigidbody != null && !cachedRigidbody.isKinematic)
+        {
+            Vector3 velocity = cachedRigidbody.velocity;
+            velocity.x = move.x * moveSpeed;
+            velocity.z = move.z * moveSpeed;
+            cachedRigidbody.velocity = velocity;
 
-        Quaternion targetRotation = Quaternion.LookRotation(move.normalized, Vector3.up);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * dt);
+            if (move.sqrMagnitude >= 0.0001f)
+            {
+                float dt = Mathf.Max(0f, deltaTime);
+                Quaternion targetRotation = Quaternion.LookRotation(move.normalized, Vector3.up);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * dt);
+            }
+
+            return;
+        }
+
+        if (move.sqrMagnitude >= 0.0001f)
+        {
+            float dt = Mathf.Max(0f, deltaTime);
+            transform.position += move * moveSpeed * dt;
+            Quaternion targetRotation = Quaternion.LookRotation(move.normalized, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * dt);
+        }
     }
 
-    private static Vector2 ReadMoveInput()
+    private Vector2 ReadMoveInput()
     {
+        if (cachedJoystick == null)
+        {
+            cachedJoystick = FindObjectOfType<JoystickController>(true);
+        }
+
+        if (cachedJoystick != null && cachedJoystick.gameObject.activeInHierarchy)
+        {
+            Vector2 joystickInput = cachedJoystick.InputDirection;
+            if (joystickInput.sqrMagnitude > 0.0001f)
+            {
+                return Vector2.ClampMagnitude(joystickInput, 1f);
+            }
+        }
+
         float x = 0f;
         float y = 0f;
 
@@ -141,5 +184,16 @@ public class B2NetworkPlayer : NetworkBehaviour
 
         Debug.Log(
             $"[B4] Sync config => owner={OwnerClientId}, serverAuth={networkTransform.IsServerAuthoritative()}, interpolate={networkTransform.Interpolate}, slerpPos={networkTransform.SlerpPosition}, posThreshold={networkTransform.PositionThreshold}, rotThreshold={networkTransform.RotAngleThreshold}");
+    }
+
+    private void ConfigureRigidbodyOwnership()
+    {
+        if (cachedRigidbody == null) return;
+
+        cachedRigidbody.isKinematic = !IsServer;
+        cachedRigidbody.useGravity = true;
+        cachedRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+        cachedRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        cachedRigidbody.interpolation = IsServer ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
     }
 }

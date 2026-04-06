@@ -16,6 +16,9 @@ public class GameHUD : MonoBehaviour
     // 私有变量
     private float timeAccumulator;     // 累计时间（秒）
     private int frameAccumulator;      // 累计帧数
+    private bool scoreSubscribed;
+    private bool playerSubscribed;
+
     void Awake()
     {
         if (player == null)
@@ -24,23 +27,15 @@ public class GameHUD : MonoBehaviour
 
     void Start()
     {
-        if (player != null)
-        {
-            player.OnXpChange += UpdateExpBar;
-            player.OnLevelUp += UpdateLevelText;
-            GameManager.Instance.OnScoreChanged += UpdateScoreText;
-        }
+        SubscribePlayerEvents(player);
+        SubscribeScoreEvent();
         ResetAccumulator();
     }
 
     void OnDestroy()
     {
-        if (player != null)
-        {
-            player.OnXpChange -= UpdateExpBar;
-            player.OnLevelUp -= UpdateLevelText;
-            GameManager.Instance.OnScoreChanged -= UpdateScoreText;
-        }
+        UnsubscribePlayerEvents(player);
+        UnsubscribeScoreEvent();
     }
     void Update()
     {
@@ -90,5 +85,62 @@ public class GameHUD : MonoBehaviour
         {
             levelText.text = $"Lv.{level}";
         }
+    }
+
+    public void BindPlayer(Player newPlayer)
+    {
+        if (player == newPlayer) return;
+
+        UnsubscribePlayerEvents(player);
+        player = newPlayer;
+        SubscribePlayerEvents(player);
+
+        if (player != null)
+        {
+            // 当前 Player 未公开 XP 百分比读取接口，先用默认 0，后续由 OnXpChange 事件驱动。
+            UpdateExpBar(0f);
+            UpdateLevelText(player.CurrentLevel);
+        }
+        else
+        {
+            if (expSlider != null) expSlider.value = 0f;
+            if (levelText != null) levelText.text = "Lv.-";
+        }
+    }
+
+    private void SubscribePlayerEvents(Player target)
+    {
+        if (target == null || playerSubscribed) return;
+
+        target.OnXpChange += UpdateExpBar;
+        target.OnLevelUp += UpdateLevelText;
+        playerSubscribed = true;
+    }
+
+    private void UnsubscribePlayerEvents(Player target)
+    {
+        if (target == null || !playerSubscribed) return;
+
+        target.OnXpChange -= UpdateExpBar;
+        target.OnLevelUp -= UpdateLevelText;
+        playerSubscribed = false;
+    }
+
+    private void SubscribeScoreEvent()
+    {
+        if (scoreSubscribed) return;
+        if (GameManager.Instance == null) return;
+
+        GameManager.Instance.OnScoreChanged += UpdateScoreText;
+        scoreSubscribed = true;
+    }
+
+    private void UnsubscribeScoreEvent()
+    {
+        if (!scoreSubscribed) return;
+        if (GameManager.Instance == null) return;
+
+        GameManager.Instance.OnScoreChanged -= UpdateScoreText;
+        scoreSubscribed = false;
     }
 }

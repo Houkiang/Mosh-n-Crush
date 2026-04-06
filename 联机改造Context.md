@@ -1,5 +1,7 @@
 # 联机改造 Context（实施步骤）
 
+> 更新时间：`2026-04-07`
+
 ## 0. 已确认决策（持续更新）
 
 - 网络方案：`Netcode for GameObjects (NGO)`（已确认）
@@ -14,6 +16,7 @@
 - 升级暂停策略：`仅升级者本地等待`（已确认）
 - 失败条件：`全员死亡失败`（已确认）
 - 云部署切换时机：`联机核心稳定后`（已确认）
+- 玩家网络实体来源：`方案二（使用现有 Player 预制体作为 NGO PlayerPrefab）`（已确认）
 
 ## 1. 项目背景
 
@@ -58,7 +61,7 @@
 - 单机下每个敌人死亡只加分一次
 - 升级弹窗与失败界面不再依赖全局停时
 
-### Phase B：联机底座 + 玩家同步
+### Phase B：联机底座 + 玩家同步（含方案二切换）
 
 目标：可 Client 接入 Dedicated Server，双端看见彼此并可移动。
 
@@ -72,7 +75,8 @@
 
 执行内容（拆分 B1~B6，可独立验收）：
 - `B1` 网络底座可启动：完成 `NetworkManager` 启动流程（Dedicated Server/Client）。
-- `B2` 网络玩家最小原型：建立 NetworkPlayer 生成/销毁与 Owner 归属校验。
+- `B2` 网络玩家最小原型：建立 NetworkPlayer 生成/销毁与 Owner 归属校验（临时胶囊版）。
+- `B2-R` 方案二切换：改为“现有 Player 预制体”作为 PlayerObject，停用临时胶囊原型。
 - `B3` 输入所有权接入：`PlayerController` 仅 Owner 读取输入。
 - `B4` 位姿同步：先接 `NetworkTransform`，再按观感调基础平滑。
 - `B5` 本地相机/HUD 归属：`CameraFollow/GameHUD/Joystick` 仅绑定本地玩家。
@@ -81,6 +85,7 @@
 完成标准（模块化）：
 - B1 通过：DS 启动 + Client 连接/断开稳定。
 - B2 通过：多人入场实体与 Owner 归属正确。
+- B2-R 通过：联机使用现有角色模型，不再出现临时白胶囊模板实体。
 - B3 通过：只有本地玩家可控制自己角色。
 - B4 通过：双端位姿同步无明显异常抖动。
 - B5 通过：相机与 HUD 不串号。
@@ -170,15 +175,17 @@ Client 负责：
 
 ## 8. 当前建议的下一步（实施中）
 
-- 进入 `B5` 开发：本地相机与 HUD 归属（每个客户端只绑定本地玩家）。
-- 每完成一个 B 模块就做一次短回归并更新清单勾选状态。
+- 进入 `B2-R`：将网络玩家从“临时白胶囊原型”切换到“现有 Player 预制体”。
+- 切换完成后复验 `B3/B4/B5`（输入所有权、坡地移动、相机/HUD/摇杆归属）。
+- 补做断连诊断（`OnClientDisconnectCallback` 原因日志）后再推进 `B6`。
 
 ## 9. 当前开发进度
 
 - Phase A：已完成（重复加分修复 + 去全局停时 + 死亡结算顺序收敛）。
 - Phase B：
   - `B1` 已完成并已验收通过（NGO/Transport 入包 + 运行时 Netcode 启动底座 + 本地 DS/Client 启动入口 + 断开后重连验证通过）。
-  - `B2` 已完成并验收通过（自动注册 PlayerPrefab + 自动生成 NetworkPlayer；单/双客户端验证 `owner=1/2` 与 `isOwner` 归属正确；客户端断开后服务端可见 `despawned`）。
+  - `B2` 已完成并验收通过（临时胶囊原型版：自动注册 PlayerPrefab + 自动生成 NetworkPlayer；单/双客户端验证 `owner=1/2` 与 `isOwner` 归属正确；客户端断开后服务端可见 `despawned`）。
   - `B3` 已完成并验收通过（Owner 输入采集 + ServerRpc 驱动位移；双客户端验证仅本地 Owner 为 `inputEnabled=True`）。
   - `B4` 已完成并验收通过（`NetworkTransform` 同步参数显式配置 + 服务端固定步输入平滑；三端 `Sync config` 一致，双客户端位姿链路正常）。
-  - 下一步：`B5` 本地相机与 HUD 归属。
+  - `B5` 已完成开发并通过原型日志验收（本地表现绑定器可绑定到本地 Owner），但需在 `B2-R` 后复验最终体验。
+  - 当前下一步：`B2-R`（方案二切换，使用现有 Player 预制体接管网络玩家）。

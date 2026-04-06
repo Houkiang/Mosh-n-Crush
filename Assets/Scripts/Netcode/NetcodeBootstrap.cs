@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-public class B1NetcodeBootstrap : MonoBehaviour
+public class NetcodeBootstrap : MonoBehaviour
 {
     private const string BootstrapObjectName = "[B1] NetcodeBootstrap";
     private const string NetworkManagerObjectName = "[B1] NetworkManager";
@@ -44,6 +44,7 @@ public class B1NetcodeBootstrap : MonoBehaviour
         EnsureSingleton();
         DontDestroyOnLoad(gameObject);
         gameObject.name = BootstrapObjectName;
+        EnsureLocalPresentationBinder();
 
         panelAddress = defaultConnectAddress;
         panelPort = defaultPort.ToString(CultureInfo.InvariantCulture);
@@ -52,7 +53,7 @@ public class B1NetcodeBootstrap : MonoBehaviour
         if (!netcodeAvailable)
         {
             currentStatus = "Netcode package missing";
-            Debug.LogWarning("B1NetcodeBootstrap: 未检测到 NGO/Transport 运行时类型，请确认 Unity 已完成包导入。\n" +
+            Debug.LogWarning("NetcodeBootstrap: 未检测到 NGO/Transport 运行时类型，请确认 Unity 已完成包导入。\n" +
                              "需要包: com.unity.netcode.gameobjects, com.unity.transport");
             return;
         }
@@ -82,6 +83,14 @@ public class B1NetcodeBootstrap : MonoBehaviour
         {
             currentStatus = "Idle (manual mode)";
         }
+    }
+
+    private void EnsureLocalPresentationBinder()
+    {
+        if (GetComponent<LocalPresentationBinder>() != null) return;
+
+        gameObject.AddComponent<LocalPresentationBinder>();
+        Debug.Log("[B5] LocalPresentationBinder attached by bootstrap.");
     }
 
     public bool StartDedicatedServer(string address, ushort port)
@@ -232,7 +241,7 @@ public class B1NetcodeBootstrap : MonoBehaviour
 
         if (networkManagerComponent == null)
         {
-            Debug.LogError("B1NetcodeBootstrap: 创建 NetworkManager 失败。");
+            Debug.LogError("NetcodeBootstrap: 创建 NetworkManager 失败。");
             return false;
         }
 
@@ -248,13 +257,13 @@ public class B1NetcodeBootstrap : MonoBehaviour
 
         if (unityTransportComponent == null)
         {
-            Debug.LogError("B1NetcodeBootstrap: 创建 UnityTransport 失败。");
+            Debug.LogError("NetcodeBootstrap: 创建 UnityTransport 失败。");
             return false;
         }
 
         if (!EnsureNetworkConfig())
         {
-            Debug.LogError("B1NetcodeBootstrap: 创建/获取 NetworkConfig 失败。");
+            Debug.LogError("NetcodeBootstrap: 创建/获取 NetworkConfig 失败。");
             return false;
         }
 
@@ -270,13 +279,13 @@ public class B1NetcodeBootstrap : MonoBehaviour
         object configObj = GetOrCreateNetworkConfig();
         if (configObj == null)
         {
-            Debug.LogError("B1NetcodeBootstrap: NetworkConfig 为空，无法绑定 NetworkTransport。");
+            Debug.LogError("NetcodeBootstrap: NetworkConfig 为空，无法绑定 NetworkTransport。");
             return;
         }
 
         if (!TrySetMember(configObj, "NetworkTransport", unityTransportComponent))
         {
-            Debug.LogWarning("B1NetcodeBootstrap: 未能将 UnityTransport 绑定到 NetworkConfig.NetworkTransport。");
+            Debug.LogWarning("NetcodeBootstrap: 未能将 UnityTransport 绑定到 NetworkConfig.NetworkTransport。");
         }
     }
 
@@ -305,7 +314,7 @@ public class B1NetcodeBootstrap : MonoBehaviour
             }
         }
 
-        Debug.LogWarning("B1NetcodeBootstrap: 未找到可用的 UnityTransport.SetConnectionData 重载。");
+        Debug.LogWarning("NetcodeBootstrap: 未找到可用的 UnityTransport.SetConnectionData 重载。");
     }
 
     private bool InvokeStartMethod(string methodName)
@@ -315,7 +324,7 @@ public class B1NetcodeBootstrap : MonoBehaviour
         MethodInfo method = networkManagerType.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
         if (method == null)
         {
-            Debug.LogError($"B1NetcodeBootstrap: 未找到方法 {methodName}。");
+            Debug.LogError($"NetcodeBootstrap: 未找到方法 {methodName}。");
             return false;
         }
 
@@ -328,7 +337,7 @@ public class B1NetcodeBootstrap : MonoBehaviour
         {
             Exception root = ex.InnerException ?? ex;
             currentStatus = $"{methodName} threw: {root.GetType().Name}";
-            Debug.LogError($"B1NetcodeBootstrap.{methodName} 异常: {root}");
+            Debug.LogError($"NetcodeBootstrap.{methodName} 异常: {root}");
             return false;
         }
     }
@@ -369,10 +378,10 @@ public class B1NetcodeBootstrap : MonoBehaviour
 
     private void EnsureSingleton()
     {
-        B1NetcodeBootstrap[] all = FindObjectsOfType<B1NetcodeBootstrap>(true);
+        NetcodeBootstrap[] all = FindObjectsOfType<NetcodeBootstrap>(true);
         if (all.Length <= 1) return;
 
-        foreach (B1NetcodeBootstrap item in all)
+        foreach (NetcodeBootstrap item in all)
         {
             if (item != this)
             {
@@ -388,7 +397,7 @@ public class B1NetcodeBootstrap : MonoBehaviour
         networkConfigType = ResolveTypeFromLoadedAssemblies("Unity.Netcode.NetworkConfig");
         networkObjectType = ResolveTypeFromLoadedAssemblies("Unity.Netcode.NetworkObject");
         networkTransformType = ResolveTypeFromLoadedAssemblies("Unity.Netcode.Components.NetworkTransform");
-        b2NetworkPlayerType = ResolveTypeFromLoadedAssemblies("B2NetworkPlayer");
+        b2NetworkPlayerType = ResolveTypeFromLoadedAssemblies("NetworkPlayerController");
         netcodeAvailable = networkManagerType != null && unityTransportType != null && networkConfigType != null;
     }
 
@@ -608,6 +617,7 @@ public class B1NetcodeBootstrap : MonoBehaviour
             EnsureB2Components(currentPlayerPrefab);
         }
 
+        HideRuntimeTemplateInScene(currentPlayerPrefab);
         bool registered = TryInvokeAddNetworkPrefab(currentPlayerPrefab);
         Debug.Log($"[B2] Player prefab prepared => name={currentPlayerPrefab.name}, addNetworkPrefab={registered}");
         return true;
@@ -634,10 +644,25 @@ public class B1NetcodeBootstrap : MonoBehaviour
 
         EnsureB2Components(prefab);
 
+        // 运行时模板仅供 NGO 实例化，不应作为场景实体显示。
+        prefab.SetActive(false);
         DontDestroyOnLoad(prefab);
         runtimeB2PlayerPrefab = prefab;
-        Debug.Log("[B2] Runtime player template created and kept active for NGO player spawning.");
+        Debug.Log("[B2] Runtime player template created and hidden for NGO player spawning.");
         return runtimeB2PlayerPrefab;
+    }
+
+    private void HideRuntimeTemplateInScene(GameObject prefab)
+    {
+        if (prefab == null) return;
+
+        bool isRuntimeTemplate = prefab == runtimeB2PlayerPrefab
+                                 || prefab.name.StartsWith("[B2] RuntimeNetworkPlayerPrefab", StringComparison.Ordinal);
+        if (!isRuntimeTemplate) return;
+        if (!prefab.activeSelf) return;
+
+        prefab.SetActive(false);
+        Debug.Log("[B2] Runtime player template hidden in scene.");
     }
 
     private void EnsureB2Components(GameObject target)
@@ -654,14 +679,34 @@ public class B1NetcodeBootstrap : MonoBehaviour
             target.AddComponent(networkTransformType);
         }
 
+        CapsuleCollider capsule = target.GetComponent<CapsuleCollider>();
+        if (capsule == null)
+        {
+            capsule = target.AddComponent<CapsuleCollider>();
+            capsule.radius = 0.5f;
+            capsule.height = 2f;
+            capsule.center = new Vector3(0f, 0f, 0f);
+        }
+
+        Rigidbody body = target.GetComponent<Rigidbody>();
+        if (body == null)
+        {
+            body = target.AddComponent<Rigidbody>();
+        }
+
+        body.useGravity = true;
+        body.constraints = RigidbodyConstraints.FreezeRotation;
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+
         if (b2NetworkPlayerType == null)
         {
-            b2NetworkPlayerType = ResolveTypeFromLoadedAssemblies("B2NetworkPlayer");
+            b2NetworkPlayerType = ResolveTypeFromLoadedAssemblies("NetworkPlayerController");
         }
 
         if (b2NetworkPlayerType == null)
         {
-            Debug.LogWarning("[B2] 未找到 B2NetworkPlayer 脚本类型，当前将仅验证自动创建玩家，不输出 B2 出生探针日志。");
+            Debug.LogWarning("[B2] 未找到 NetworkPlayerController 脚本类型，当前将仅验证自动创建玩家，不输出 B2 出生探针日志。");
             return;
         }
 

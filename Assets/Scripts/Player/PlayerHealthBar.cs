@@ -15,6 +15,7 @@ public class PlayerHealthBar : MonoBehaviour
 
     private Transform targetTransform;
     private Quaternion originalRotation;
+    private bool subscribed;
 
     void Awake()
     {
@@ -23,14 +24,7 @@ public class PlayerHealthBar : MonoBehaviour
 
     void Start()
     {
-        if (player != null)
-        {
-            targetTransform = player.transform;
-            // 订阅事件
-            player.OnHealthChange += UpdateHealthBar;
-            // 初始化显示
-            UpdateHealthBar(player.CurrentHealth, player.MaxHealth);
-        }
+        BindPlayer(player);
 
         // 记录世界坐标的UI旋转
         originalRotation = transform.rotation;
@@ -38,8 +32,7 @@ public class PlayerHealthBar : MonoBehaviour
 
     void OnDestroy()
     {
-        if (player != null)
-            player.OnHealthChange -= UpdateHealthBar;
+        UnsubscribePlayer(player);
     }
 
     private void UpdateHealthBar(float current, float max)
@@ -67,5 +60,31 @@ public class PlayerHealthBar : MonoBehaviour
                 transform.forward = Camera.main.transform.forward;
             }
         }
+    }
+
+    public void BindPlayer(Player newPlayer)
+    {
+        if (player == newPlayer && (newPlayer == null || subscribed)) return;
+
+        UnsubscribePlayer(player);
+        player = newPlayer;
+        targetTransform = player != null ? player.transform : null;
+
+        if (player == null)
+        {
+            if (healthSlider != null) healthSlider.value = 0f;
+            return;
+        }
+
+        player.OnHealthChange += UpdateHealthBar;
+        subscribed = true;
+        UpdateHealthBar(player.CurrentHealth, player.MaxHealth);
+    }
+
+    private void UnsubscribePlayer(Player target)
+    {
+        if (!subscribed || target == null) return;
+        target.OnHealthChange -= UpdateHealthBar;
+        subscribed = false;
     }
 }
