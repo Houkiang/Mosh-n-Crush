@@ -15,6 +15,11 @@ public class B1NetcodeBootstrap : MonoBehaviour
     [SerializeField] private string defaultConnectAddress = "127.0.0.1";
     [SerializeField] private ushort defaultPort = 7777;
 
+    [Header("B2 玩家原型配置")]
+    [SerializeField] private bool enableB2PlayerPrototype = true;
+    [SerializeField] private Vector3 b2SpawnOrigin = new Vector3(0f, 1f, 0f);
+    [SerializeField] private float b2SpawnSpacing = 3f;
+
     [Header("运行时状态(只读)")]
     [SerializeField] private bool netcodeAvailable;
     [SerializeField] private string currentStatus = "Not Initialized";
@@ -22,10 +27,14 @@ public class B1NetcodeBootstrap : MonoBehaviour
     private Type networkManagerType;
     private Type unityTransportType;
     private Type networkConfigType;
+    private Type networkObjectType;
+    private Type networkTransformType;
+    private Type b2NetworkPlayerType;
 
     private Component networkManagerComponent;
     private Component unityTransportComponent;
     private bool callbacksSubscribed;
+    private GameObject runtimeB2PlayerPrefab;
 
     private string panelAddress;
     private string panelPort;
@@ -188,6 +197,12 @@ public class B1NetcodeBootstrap : MonoBehaviour
         if (!EnsureNetworkObjects())
         {
             currentStatus = "Network object setup failed";
+            return false;
+        }
+
+        if (!PrepareB2PlayerPrefab())
+        {
+            currentStatus = "B2 player prefab setup failed";
             return false;
         }
 
@@ -371,6 +386,9 @@ public class B1NetcodeBootstrap : MonoBehaviour
         networkManagerType = ResolveTypeFromLoadedAssemblies("Unity.Netcode.NetworkManager");
         unityTransportType = ResolveTypeFromLoadedAssemblies("Unity.Netcode.Transports.UTP.UnityTransport");
         networkConfigType = ResolveTypeFromLoadedAssemblies("Unity.Netcode.NetworkConfig");
+        networkObjectType = ResolveTypeFromLoadedAssemblies("Unity.Netcode.NetworkObject");
+        networkTransformType = ResolveTypeFromLoadedAssemblies("Unity.Netcode.Components.NetworkTransform");
+        b2NetworkPlayerType = ResolveTypeFromLoadedAssemblies("B2NetworkPlayer");
         netcodeAvailable = networkManagerType != null && unityTransportType != null && networkConfigType != null;
     }
 
@@ -487,6 +505,12 @@ public class B1NetcodeBootstrap : MonoBehaviour
 
         string role = isServer && !isClient ? "Server" : (isClient && !isServer ? "Client" : "Host/Unknown");
         Debug.Log($"[B1] Event => OnClientConnectedCallback, role={role}, clientId={clientId}");
+
+        // B2 兜底：如果 NGO 未自动创建 PlayerObject，则在服务端补一次 SpawnAsPlayerObject。
+        if (isServer)
+        {
+            EnsureServerPlayerObject(clientId);
+        }
     }
 
     private void HandleClientDisconnected(ulong clientId)
@@ -544,6 +568,251 @@ public class B1NetcodeBootstrap : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool PrepareB2PlayerPrefab()
+    {
+        if (!enableB2PlayerPrototype) return true;
+        if (networkManagerComponent == null || networkConfigType == null) return false;
+        if (networkObjectType == null)
+        {
+            Debug.LogError("[B2] 未找到 Unity.Netcode.NetworkObject 类型，无法注册玩家预制体。");
+            return false;
+        }
+
+        object configObj = GetOrCreateNetworkConfig();
+        if (configObj == null)
+        {
+            Debug.LogError("[B2] NetworkConfig 为空，无法配置 PlayerPrefab。");
+            return false;
+        }
+
+        GameObject currentPlayerPrefab = ReadPlayerPrefab(configObj);
+        if (currentPlayerPrefab == null)
+        {
+            currentPlayerPrefab = CreateRuntimeB2PlayerPrefab();
+            if (currentPlayerPrefab == null)
+            {
+                Debug.LogError("[B2] 创建运行时 PlayerPrefab 失败。");
+                return false;
+            }
+
+            if (!TrySetMember(configObj, "PlayerPrefab", currentPlayerPrefab))
+            {
+                Debug.LogError("[B2] 无法写入 NetworkConfig.PlayerPrefab。");
+                return false;
+            }
+        }
+        else
+        {
+            EnsureB2Components(currentPlayerPrefab);
+        }
+
+        bool registered = TryInvokeAddNetworkPrefab(currentPlayerPrefab);
+        Debug.Log($"[B2] Player prefab prepared => name={currentPlayerPrefab.name}, addNetworkPrefab={registered}");
+        return true;
+    }
+
+    private GameObject CreateRuntimeB2PlayerPrefab()
+    {
+        if (runtimeB2PlayerPrefab != null) return runtimeB2PlayerPrefab;
+
+        GameObject prefab = new GameObject("[B2] RuntimeNetworkPlayerPrefab");
+        prefab.transform.position = b2SpawnOrigin;
+        prefab.hideFlags = HideFlags.HideAndDontSave;
+
+        // 可视化体仅用于 B2 验证，后续会切换为正式玩家网络预制体。
+        GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        visual.name = "Visual";
+        visual.transform.SetParent(prefab.transform, false);
+        visual.transform.localPosition = Vector3.zero;
+        Collider visualCollider = visual.GetComponent<Collider>();
+        if (visualCollider != null)
+        {
+            Destroy(visualCollider);
+        }
+
+        EnsureB2Components(prefab);
+
+        DontDestroyOnLoad(prefab);
+        runtimeB2PlayerPrefab = prefab;
+        Debug.Log("[B2] Runtime player template created and kept active for NGO player spawning.");
+        return runtimeB2PlayerPrefab;
+    }
+
+    private void EnsureB2Components(GameObject target)
+    {
+        if (target == null) return;
+
+        if (networkObjectType != null && target.GetComponent(networkObjectType) == null)
+        {
+            target.AddComponent(networkObjectType);
+        }
+
+        if (networkTransformType != null && target.GetComponent(networkTransformType) == null)
+        {
+            target.AddComponent(networkTransformType);
+        }
+
+        if (b2NetworkPlayerType == null)
+        {
+            b2NetworkPlayerType = ResolveTypeFromLoadedAssemblies("B2NetworkPlayer");
+        }
+
+        if (b2NetworkPlayerType == null)
+        {
+            Debug.LogWarning("[B2] 未找到 B2NetworkPlayer 脚本类型，当前将仅验证自动创建玩家，不输出 B2 出生探针日志。");
+            return;
+        }
+
+        Component probe = target.GetComponent(b2NetworkPlayerType);
+        if (probe == null)
+        {
+            probe = target.AddComponent(b2NetworkPlayerType);
+        }
+
+        if (probe != null)
+        {
+            TryInvokeSpawnRuleSetter(probe);
+        }
+    }
+
+    private bool TryInvokeAddNetworkPrefab(GameObject prefab)
+    {
+        if (networkManagerComponent == null || prefab == null) return false;
+
+        try
+        {
+            MethodInfo addMethod = networkManagerType.GetMethod("AddNetworkPrefab", BindingFlags.Instance | BindingFlags.Public);
+            if (addMethod == null) return false;
+            addMethod.Invoke(networkManagerComponent, new object[] { prefab });
+            return true;
+        }
+        catch (TargetInvocationException ex)
+        {
+            Exception root = ex.InnerException ?? ex;
+            Debug.LogWarning($"[B2] AddNetworkPrefab 调用失败（可忽略一次性重复注册）: {root.Message}");
+            return false;
+        }
+    }
+
+    private static GameObject ReadPlayerPrefab(object configObj)
+    {
+        if (configObj == null) return null;
+
+        BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        Type type = configObj.GetType();
+
+        FieldInfo field = type.GetField("PlayerPrefab", flags);
+        if (field != null && typeof(GameObject).IsAssignableFrom(field.FieldType))
+        {
+            return field.GetValue(configObj) as GameObject;
+        }
+
+        PropertyInfo property = type.GetProperty("PlayerPrefab", flags);
+        if (property != null && typeof(GameObject).IsAssignableFrom(property.PropertyType) && property.CanRead)
+        {
+            return property.GetValue(configObj) as GameObject;
+        }
+
+        return null;
+    }
+
+    private void TryInvokeSpawnRuleSetter(Component probe)
+    {
+        if (probe == null) return;
+
+        MethodInfo setSpawnRule = probe.GetType().GetMethod("SetSpawnRule", BindingFlags.Instance | BindingFlags.Public);
+        if (setSpawnRule == null) return;
+
+        ParameterInfo[] parameters = setSpawnRule.GetParameters();
+        if (parameters.Length != 2) return;
+        if (parameters[0].ParameterType != typeof(Vector3) || parameters[1].ParameterType != typeof(float)) return;
+
+        setSpawnRule.Invoke(probe, new object[] { b2SpawnOrigin, b2SpawnSpacing });
+    }
+
+    private void EnsureServerPlayerObject(ulong clientId)
+    {
+        if (!enableB2PlayerPrototype || networkManagerComponent == null || networkManagerType == null) return;
+
+        try
+        {
+            object spawnManager = ReadMemberValue(networkManagerComponent, networkManagerType, "SpawnManager");
+            if (spawnManager == null) return;
+
+            MethodInfo getPlayerMethod = spawnManager.GetType().GetMethod("GetPlayerNetworkObject", BindingFlags.Instance | BindingFlags.Public);
+            if (getPlayerMethod != null)
+            {
+                object existingPlayer = getPlayerMethod.Invoke(spawnManager, new object[] { clientId });
+                if (existingPlayer != null)
+                {
+                    Debug.Log($"[B2] PlayerObject already exists for clientId={clientId}, skip fallback spawn.");
+                    return;
+                }
+            }
+
+            object configObj = GetOrCreateNetworkConfig();
+            GameObject playerPrefab = ReadPlayerPrefab(configObj);
+            if (playerPrefab == null)
+            {
+                Debug.LogError($"[B2] Fallback spawn failed: PlayerPrefab is null, clientId={clientId}");
+                return;
+            }
+
+            GameObject instance = Instantiate(playerPrefab);
+            instance.name = $"{playerPrefab.name}_Client_{clientId}";
+            instance.SetActive(true);
+
+            Component netObj = instance.GetComponent(networkObjectType);
+            if (netObj == null)
+            {
+                Debug.LogError($"[B2] Fallback spawn failed: instance has no NetworkObject, clientId={clientId}");
+                Destroy(instance);
+                return;
+            }
+
+            MethodInfo spawnAsPlayerMethod = networkObjectType.GetMethod(
+                "SpawnAsPlayerObject",
+                BindingFlags.Instance | BindingFlags.Public,
+                binder: null,
+                types: new[] { typeof(ulong), typeof(bool) },
+                modifiers: null);
+
+            if (spawnAsPlayerMethod == null)
+            {
+                Debug.LogError("[B2] Fallback spawn failed: NetworkObject.SpawnAsPlayerObject not found.");
+                Destroy(instance);
+                return;
+            }
+
+            spawnAsPlayerMethod.Invoke(netObj, new object[] { clientId, false });
+            Debug.Log($"[B2] Fallback SpawnAsPlayerObject success => clientId={clientId}, instance={instance.name}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[B2] EnsureServerPlayerObject exception for clientId={clientId}: {ex}");
+        }
+    }
+
+    private static object ReadMemberValue(object target, Type targetType, string memberName)
+    {
+        if (target == null || targetType == null || string.IsNullOrEmpty(memberName)) return null;
+
+        BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        PropertyInfo property = targetType.GetProperty(memberName, flags);
+        if (property != null && property.CanRead)
+        {
+            return property.GetValue(target);
+        }
+
+        FieldInfo field = targetType.GetField(memberName, flags);
+        if (field != null)
+        {
+            return field.GetValue(target);
+        }
+
+        return null;
     }
 
     private enum LaunchMode
