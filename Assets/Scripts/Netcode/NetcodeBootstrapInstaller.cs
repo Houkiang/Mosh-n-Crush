@@ -1,9 +1,18 @@
 using UnityEngine;
+using UnityEngine.Scripting;
 
+[Preserve]
 public static class NetcodeBootstrapInstaller
 {
+    [Preserve]
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Install()
+    {
+        EnsureInstalled();
+    }
+
+    [Preserve]
+    public static void EnsureInstalled()
     {
         NetcodeBootstrap existingBootstrap = UnityEngine.Object.FindObjectOfType<NetcodeBootstrap>(true);
         if (existingBootstrap != null)
@@ -15,6 +24,7 @@ public static class NetcodeBootstrapInstaller
         GameObject bootstrap = new GameObject("[B1] NetcodeBootstrap");
         bootstrap.AddComponent<NetcodeBootstrap>();
         EnsureB5Binder(bootstrap);
+        Debug.Log("[B1] NetcodeBootstrap installed by installer.");
     }
 
     private static void EnsureB5Binder(GameObject bootstrap)

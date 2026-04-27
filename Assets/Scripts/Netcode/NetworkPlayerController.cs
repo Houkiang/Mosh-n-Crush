@@ -36,6 +36,13 @@ public class NetworkPlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (gameObject.tag != "Player")
+        {
+            gameObject.tag = "Player";
+        }
+
+        DisableLegacyDrivers();
+
         if (IsServer)
         {
             transform.position = ComputeSpawnPosition(OwnerClientId);
@@ -195,5 +202,23 @@ public class NetworkPlayerController : NetworkBehaviour
         cachedRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
         cachedRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         cachedRigidbody.interpolation = IsServer ? RigidbodyInterpolation.Interpolate : RigidbodyInterpolation.None;
+    }
+
+    private void DisableLegacyDrivers()
+    {
+        PlayerController localController = GetComponent<PlayerController>();
+        if (localController != null && localController.enabled)
+        {
+            localController.enabled = false;
+        }
+
+        WeaponManager[] weaponManagers = GetComponentsInChildren<WeaponManager>(true);
+        foreach (WeaponManager weaponManager in weaponManagers)
+        {
+            if (weaponManager != null && weaponManager.enabled)
+            {
+                weaponManager.enabled = false;
+            }
+        }
     }
 }

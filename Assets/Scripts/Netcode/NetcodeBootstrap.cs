@@ -8,6 +8,7 @@ public class NetcodeBootstrap : MonoBehaviour
 {
     private const string BootstrapObjectName = "[B1] NetcodeBootstrap";
     private const string NetworkManagerObjectName = "[B1] NetworkManager";
+    private const uint RuntimeB2PlayerStableHash = 3202202601u;
 
     [Header("B1 启动配置")]
     [SerializeField] private bool autoStartFromCommandLine = true;
@@ -17,6 +18,7 @@ public class NetcodeBootstrap : MonoBehaviour
 
     [Header("B2 玩家原型配置")]
     [SerializeField] private bool enableB2PlayerPrototype = true;
+    [SerializeField] private bool preferExistingPlayerPrefab = true;
     [SerializeField] private Vector3 b2SpawnOrigin = new Vector3(0f, 1f, 0f);
     [SerializeField] private float b2SpawnSpacing = 3f;
 
@@ -35,6 +37,10 @@ public class NetcodeBootstrap : MonoBehaviour
     private Component unityTransportComponent;
     private bool callbacksSubscribed;
     private GameObject runtimeB2PlayerPrefab;
+    private uint runtimeB2TemplateHash;
+    private LaunchMode pendingLaunchMode = LaunchMode.None;
+    private string pendingLaunchAddress;
+    private ushort pendingLaunchPort;
 
     private string panelAddress;
     private string panelPort;
@@ -72,7 +78,10 @@ public class NetcodeBootstrap : MonoBehaviour
             Debug.Log($"[B1] Launch args parsed => mode={args.Mode}, ip={args.Address}, port={args.Port}");
             if (args.Mode != LaunchMode.None)
             {
-                StartByMode(args.Mode, args.Address, args.Port);
+                pendingLaunchMode = args.Mode;
+                pendingLaunchAddress = args.Address;
+                pendingLaunchPort = args.Port;
+                currentStatus = "Pending auto start (wait scene)";
             }
             else
             {
@@ -83,6 +92,21 @@ public class NetcodeBootstrap : MonoBehaviour
         {
             currentStatus = "Idle (manual mode)";
         }
+    }
+
+    private void Start()
+    {
+        if (pendingLaunchMode == LaunchMode.None) return;
+
+        LaunchMode mode = pendingLaunchMode;
+        string address = pendingLaunchAddress;
+        ushort port = pendingLaunchPort;
+
+        pendingLaunchMode = LaunchMode.None;
+        pendingLaunchAddress = null;
+        pendingLaunchPort = 0;
+
+        StartByMode(mode, address, port);
     }
 
     private void EnsureLocalPresentationBinder()
@@ -100,6 +124,10 @@ public class NetcodeBootstrap : MonoBehaviour
 
         ShutdownIfListening();
         bool started = InvokeStartMethod("StartServer");
+        if (started)
+        {
+            DisableLegacyScenePlayersInCurrentScene();
+        }
         currentStatus = started ? $"Server running @ {address}:{port}" : "StartServer failed";
         Debug.Log($"[B1] StartServer result => {started}, status={currentStatus}");
         return started;
@@ -215,6 +243,7 @@ public class NetcodeBootstrap : MonoBehaviour
             return false;
         }
 
+        ConfigureNetworkConfigForBPhase();
         ConfigureTransport(address, port);
         BindTransportToNetworkConfig();
         return true;
@@ -519,6 +548,7 @@ public class NetcodeBootstrap : MonoBehaviour
         if (isServer)
         {
             EnsureServerPlayerObject(clientId);
+            TryAssignServerTargetPlayer(clientId);
         }
     }
 
@@ -597,30 +627,123 @@ public class NetcodeBootstrap : MonoBehaviour
         }
 
         GameObject currentPlayerPrefab = ReadPlayerPrefab(configObj);
-        if (currentPlayerPrefab == null)
+        GameObject desiredPlayerPrefab = ResolveB2PlayerPrefabCandidate(out string source);
+        if (desiredPlayerPrefab == null)
         {
-            currentPlayerPrefab = CreateRuntimeB2PlayerPrefab();
-            if (currentPlayerPrefab == null)
-            {
-                Debug.LogError("[B2] 创建运行时 PlayerPrefab 失败。");
-                return false;
-            }
+            Debug.LogError("[B2] 未能解析可用的 PlayerPrefab。");
+            return false;
+        }
 
-            if (!TrySetMember(configObj, "PlayerPrefab", currentPlayerPrefab))
+        EnsureB2Components(desiredPlayerPrefab);
+        DebugLogB2TemplateComponents(desiredPlayerPrefab);
+
+        if (currentPlayerPrefab != desiredPlayerPrefab)
+        {
+            if (!TrySetMember(configObj, "PlayerPrefab", desiredPlayerPrefab))
             {
                 Debug.LogError("[B2] 无法写入 NetworkConfig.PlayerPrefab。");
                 return false;
             }
         }
-        else
+
+        HideRuntimeTemplateInScene(desiredPlayerPrefab);
+        bool registered = TryInvokeAddNetworkPrefab(desiredPlayerPrefab);
+        Debug.Log($"[B2] Player prefab prepared => source={source}, name={desiredPlayerPrefab.name}, addNetworkPrefab={registered}");
+        return true;
+    }
+
+    private void DebugLogB2TemplateComponents(GameObject prefab)
+    {
+        if (prefab == null)
         {
-            EnsureB2Components(currentPlayerPrefab);
+            Debug.LogWarning("[B2-R] Template verify skipped: prefab is null");
+            return;
         }
 
-        HideRuntimeTemplateInScene(currentPlayerPrefab);
-        bool registered = TryInvokeAddNetworkPrefab(currentPlayerPrefab);
-        Debug.Log($"[B2] Player prefab prepared => name={currentPlayerPrefab.name}, addNetworkPrefab={registered}");
+        bool hasNO = networkObjectType != null && prefab.GetComponent(networkObjectType) != null;
+        bool hasNT = networkTransformType != null && prefab.GetComponent(networkTransformType) != null;
+        bool hasNPC = prefab.GetComponent<NetworkPlayerController>() != null;
+        Debug.Log($"[B2-R] Template verify => name={prefab.name}, hasNO={hasNO}, hasNT={hasNT}, hasNPC={hasNPC}, activeSelf={prefab.activeSelf}");
+    }
+
+    private GameObject ResolveB2PlayerPrefabCandidate(out string source)
+    {
+        if (preferExistingPlayerPrefab && TryCreateRuntimePrefabFromExistingPlayer(out GameObject fromScenePlayer))
+        {
+            source = "ExistingPlayer";
+            return fromScenePlayer;
+        }
+
+        source = "CapsuleFallback";
+        return CreateRuntimeB2PlayerPrefab();
+    }
+
+    private bool TryCreateRuntimePrefabFromExistingPlayer(out GameObject prefab)
+    {
+        prefab = null;
+        GameObject scenePlayer = FindExistingScenePlayerObject();
+        if (scenePlayer == null) return false;
+
+        // B2-R: 以场景中既有 Player 的摆放点作为网络出生基准点，
+        // 避免默认(0,1,0)导致角色刷在不可见区域或地形下方。
+        b2SpawnOrigin = scenePlayer.transform.position;
+
+        bool reuseExistingTemplate = runtimeB2PlayerPrefab != null
+                                     && runtimeB2PlayerPrefab.GetComponent<Player>() != null
+                                     && runtimeB2PlayerPrefab.name.StartsWith("[B2-R]", StringComparison.Ordinal);
+        if (reuseExistingTemplate)
+        {
+            Debug.Log($"[B2-R] Reuse existing runtime template; spawn origin aligned => {b2SpawnOrigin}");
+            prefab = runtimeB2PlayerPrefab;
+            return true;
+        }
+
+        if (runtimeB2PlayerPrefab != null)
+        {
+            Destroy(runtimeB2PlayerPrefab);
+            runtimeB2PlayerPrefab = null;
+        }
+
+        GameObject clone = Instantiate(scenePlayer);
+        clone.name = "[B2-R] RuntimeNetworkPlayerPrefab";
+        clone.transform.position = b2SpawnOrigin;
+
+        runtimeB2TemplateHash = StripExistingNetcodeComponents(clone);
+
+        // 运行时模板保持激活，保证 NGO 自动实例化时对象为 active。
+        // 同时将模板对象移到 Bootstrap 节点下，尽量避开主场景内容扫描链路。
+        clone.transform.SetParent(transform, worldPositionStays: true);
+        clone.tag = "Untagged";
+
+        clone.hideFlags = HideFlags.HideAndDontSave;
+        clone.SetActive(true);
+
+        DontDestroyOnLoad(clone);
+        runtimeB2PlayerPrefab = clone;
+        Debug.Log($"[B2-R] Runtime player template created from existing Player => source={scenePlayer.name}, spawnOrigin={b2SpawnOrigin}, scene={clone.scene.name}, hashHint={runtimeB2TemplateHash}");
+
+        prefab = runtimeB2PlayerPrefab;
         return true;
+    }
+
+    private static GameObject FindExistingScenePlayerObject()
+    {
+        GameObject tagged = GameObject.FindGameObjectWithTag("Player");
+        if (tagged != null && tagged.hideFlags == HideFlags.None) return tagged;
+
+        Player[] players = FindObjectsOfType<Player>(true);
+        foreach (Player player in players)
+        {
+            if (player == null) continue;
+            GameObject go = player.gameObject;
+            if (go == null) continue;
+            if (!go.scene.IsValid() || !go.scene.isLoaded) continue;
+            if (go.hideFlags != HideFlags.None) continue;
+            if (go.name.StartsWith("[B2]", StringComparison.Ordinal) || go.name.StartsWith("[B2-R]", StringComparison.Ordinal)) continue;
+            return go;
+        }
+
+        return null;
     }
 
     private GameObject CreateRuntimeB2PlayerPrefab()
@@ -652,6 +775,66 @@ public class NetcodeBootstrap : MonoBehaviour
         return runtimeB2PlayerPrefab;
     }
 
+    private uint StripExistingNetcodeComponents(GameObject root)
+    {
+        if (root == null) return 0u;
+
+        int removedNetworkObject = 0;
+        int removedNetworkTransform = 0;
+        uint preservedHash = 0u;
+
+        if (networkObjectType != null)
+        {
+            Component[] objects = root.GetComponentsInChildren(networkObjectType, true);
+            foreach (Component item in objects)
+            {
+                if (item == null) continue;
+                if (preservedHash == 0u)
+                {
+                    object hashObj = ReadMemberValue(item, item.GetType(), "GlobalObjectIdHash");
+                    if (hashObj is uint hashValue && hashValue != 0u)
+                    {
+                        preservedHash = hashValue;
+                    }
+                }
+                DestroyComponentImmediate(item);
+                removedNetworkObject++;
+            }
+        }
+
+        if (networkTransformType != null)
+        {
+            Component[] transforms = root.GetComponentsInChildren(networkTransformType, true);
+            foreach (Component item in transforms)
+            {
+                if (item == null) continue;
+                DestroyComponentImmediate(item);
+                removedNetworkTransform++;
+            }
+        }
+
+        if (removedNetworkObject > 0 || removedNetworkTransform > 0)
+        {
+            Debug.Log($"[B2-R] Stripped legacy netcode components => no={removedNetworkObject}, nt={removedNetworkTransform}, preservedHash={preservedHash}");
+        }
+
+        return preservedHash;
+    }
+
+    private static void DestroyComponentImmediate(Component component)
+    {
+        if (component == null) return;
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            DestroyImmediate(component);
+            return;
+        }
+#endif
+        // 运行时模板的旧网络组件必须同帧剥离，避免 Ensure 阶段误判“组件仍存在”。
+        DestroyImmediate(component);
+    }
+
     private void HideRuntimeTemplateInScene(GameObject prefab)
     {
         if (prefab == null) return;
@@ -669,15 +852,23 @@ public class NetcodeBootstrap : MonoBehaviour
     {
         if (target == null) return;
 
-        if (networkObjectType != null && target.GetComponent(networkObjectType) == null)
+        Component networkObject = null;
+        if (networkObjectType != null)
         {
-            target.AddComponent(networkObjectType);
+            networkObject = target.GetComponent(networkObjectType);
+            if (networkObject == null)
+            {
+                networkObject = target.AddComponent(networkObjectType);
+            }
         }
 
         if (networkTransformType != null && target.GetComponent(networkTransformType) == null)
         {
             target.AddComponent(networkTransformType);
         }
+
+        EnsureStableTemplateHash(networkObject);
+        ForceAsDynamicSpawn(networkObject);
 
         CapsuleCollider capsule = target.GetComponent<CapsuleCollider>();
         if (capsule == null)
@@ -699,26 +890,88 @@ public class NetcodeBootstrap : MonoBehaviour
         body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         body.interpolation = RigidbodyInterpolation.Interpolate;
 
-        if (b2NetworkPlayerType == null)
-        {
-            b2NetworkPlayerType = ResolveTypeFromLoadedAssemblies("NetworkPlayerController");
-        }
-
-        if (b2NetworkPlayerType == null)
-        {
-            Debug.LogWarning("[B2] 未找到 NetworkPlayerController 脚本类型，当前将仅验证自动创建玩家，不输出 B2 出生探针日志。");
-            return;
-        }
-
-        Component probe = target.GetComponent(b2NetworkPlayerType);
+        NetworkPlayerController probe = target.GetComponent<NetworkPlayerController>();
         if (probe == null)
         {
-            probe = target.AddComponent(b2NetworkPlayerType);
+            probe = target.AddComponent<NetworkPlayerController>();
         }
 
         if (probe != null)
         {
-            TryInvokeSpawnRuleSetter(probe);
+            probe.SetSpawnRule(b2SpawnOrigin, b2SpawnSpacing);
+        }
+        else
+        {
+            Debug.LogError("[B2-R] 无法挂载 NetworkPlayerController，玩家生成将缺少输入/出生/日志链路。");
+        }
+
+        DisableLocalOnlyComponentsForB2(target);
+
+        bool hasNetworkObject = target.GetComponent(networkObjectType) != null;
+        bool hasNetworkTransform = target.GetComponent(networkTransformType) != null;
+        bool hasNetworkPlayerController = target.GetComponent<NetworkPlayerController>() != null;
+        Debug.Log($"[B2-R] Ensure player components => name={target.name}, hasNO={hasNetworkObject}, hasNT={hasNetworkTransform}, hasNPC={hasNetworkPlayerController}");
+    }
+
+    private void EnsureStableTemplateHash(Component networkObject)
+    {
+        if (networkObject == null) return;
+
+        uint currentHash = 0u;
+        object current = ReadMemberValue(networkObject, networkObject.GetType(), "GlobalObjectIdHash");
+        if (current is uint currentValue)
+        {
+            currentHash = currentValue;
+        }
+
+        uint targetHash = RuntimeB2PlayerStableHash;
+        if (runtimeB2TemplateHash == 0u)
+        {
+            runtimeB2TemplateHash = targetHash;
+        }
+
+        if (currentHash != targetHash)
+        {
+            if (!TrySetMember(networkObject, "GlobalObjectIdHash", targetHash))
+            {
+                Debug.LogWarning($"[B2-R] Failed to set stable GlobalObjectIdHash => current={currentHash}, target={targetHash}");
+            }
+            else
+            {
+                Debug.Log($"[B2-R] GlobalObjectIdHash forced => from={currentHash}, to={targetHash}");
+            }
+        }
+    }
+
+    private void ConfigureNetworkConfigForBPhase()
+    {
+        object configObj = GetOrCreateNetworkConfig();
+        if (configObj == null) return;
+
+        // B 阶段仅验证连接/玩家同步，先禁用场景管理，避免 SceneObject 同步链路与运行时模板冲突。
+        if (TrySetMember(configObj, "EnableSceneManagement", false))
+        {
+            Debug.Log("[B1] NetworkConfig => EnableSceneManagement=False (B-phase stability mode)");
+        }
+    }
+
+    private static void DisableLocalOnlyComponentsForB2(GameObject target)
+    {
+        if (target == null) return;
+
+        PlayerController localController = target.GetComponent<PlayerController>();
+        if (localController != null && localController.enabled)
+        {
+            localController.enabled = false;
+        }
+
+        WeaponManager[] weaponManagers = target.GetComponentsInChildren<WeaponManager>(true);
+        foreach (WeaponManager weaponManager in weaponManagers)
+        {
+            if (weaponManager != null && weaponManager.enabled)
+            {
+                weaponManager.enabled = false;
+            }
         }
     }
 
@@ -790,9 +1043,30 @@ public class NetcodeBootstrap : MonoBehaviour
             if (getPlayerMethod != null)
             {
                 object existingPlayer = getPlayerMethod.Invoke(spawnManager, new object[] { clientId });
-                if (existingPlayer != null)
+                if (existingPlayer is Component existingPlayerComponent)
                 {
-                    Debug.Log($"[B2] PlayerObject already exists for clientId={clientId}, skip fallback spawn.");
+                    NetworkPlayerController existingController = existingPlayerComponent.GetComponent<NetworkPlayerController>();
+                    bool isSpawned = ReadBoolProperty(existingPlayerComponent, existingPlayerComponent.GetType(), "IsSpawned");
+                    bool isActive = existingPlayerComponent.gameObject.activeSelf && existingPlayerComponent.gameObject.activeInHierarchy;
+                    bool existingValid = existingController != null && isSpawned && isActive;
+
+                    if (existingValid)
+                    {
+                        if (!existingController.enabled)
+                        {
+                            existingController.enabled = true;
+                        }
+
+                        existingController.SetSpawnRule(b2SpawnOrigin, b2SpawnSpacing);
+                        Debug.Log($"[B2] PlayerObject already exists for clientId={clientId}, keep existing => {DescribePlayerObject(existingPlayerComponent.gameObject)}");
+                        return;
+                    }
+
+                    string reason = existingController == null
+                        ? "missing NetworkPlayerController"
+                        : (!isSpawned ? "not spawned" : "inactive");
+                    Debug.LogWarning($"[B2-R] Existing player object invalid ({reason}), replacing => clientId={clientId}, {DescribePlayerObject(existingPlayerComponent.gameObject)}");
+                    ReplaceExistingPlayerObject(existingPlayerComponent, clientId);
                     return;
                 }
             }
@@ -831,6 +1105,7 @@ public class NetcodeBootstrap : MonoBehaviour
                 return;
             }
 
+            ForceAsDynamicSpawn(netObj);
             spawnAsPlayerMethod.Invoke(netObj, new object[] { clientId, false });
             Debug.Log($"[B2] Fallback SpawnAsPlayerObject success => clientId={clientId}, instance={instance.name}");
         }
@@ -838,6 +1113,148 @@ public class NetcodeBootstrap : MonoBehaviour
         {
             Debug.LogError($"[B2] EnsureServerPlayerObject exception for clientId={clientId}: {ex}");
         }
+    }
+
+    private void ReplaceExistingPlayerObject(Component existingPlayerComponent, ulong clientId)
+    {
+        if (existingPlayerComponent == null) return;
+
+        try
+        {
+            MethodInfo despawnMethod = networkObjectType.GetMethod(
+                "Despawn",
+                BindingFlags.Instance | BindingFlags.Public,
+                binder: null,
+                types: new[] { typeof(bool) },
+                modifiers: null);
+
+            if (despawnMethod != null)
+            {
+                despawnMethod.Invoke(existingPlayerComponent, new object[] { true });
+            }
+            else
+            {
+                Destroy(existingPlayerComponent.gameObject);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[B2-R] Existing player despawn failed, fallback destroy => clientId={clientId}, reason={ex.Message}");
+            if (existingPlayerComponent != null && existingPlayerComponent.gameObject != null)
+            {
+                Destroy(existingPlayerComponent.gameObject);
+            }
+        }
+
+        object configObj = GetOrCreateNetworkConfig();
+        GameObject playerPrefab = ReadPlayerPrefab(configObj);
+        if (playerPrefab == null)
+        {
+            Debug.LogError($"[B2-R] Replace existing player failed: PlayerPrefab is null, clientId={clientId}");
+            return;
+        }
+
+        GameObject instance = Instantiate(playerPrefab);
+        instance.name = $"{playerPrefab.name}_Client_{clientId}_Replaced";
+        instance.SetActive(true);
+
+        Component netObj = instance.GetComponent(networkObjectType);
+        if (netObj == null)
+        {
+            Debug.LogError($"[B2-R] Replace existing player failed: instance has no NetworkObject, clientId={clientId}");
+            Destroy(instance);
+            return;
+        }
+
+        ForceAsDynamicSpawn(netObj);
+        MethodInfo spawnAsPlayerMethod = networkObjectType.GetMethod(
+            "SpawnAsPlayerObject",
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            types: new[] { typeof(ulong), typeof(bool) },
+            modifiers: null);
+        if (spawnAsPlayerMethod == null)
+        {
+            Debug.LogError("[B2-R] Replace existing player failed: NetworkObject.SpawnAsPlayerObject not found.");
+            Destroy(instance);
+            return;
+        }
+
+        spawnAsPlayerMethod.Invoke(netObj, new object[] { clientId, false });
+        Debug.Log($"[B2-R] Replace existing player success => clientId={clientId}, instance={instance.name}");
+    }
+
+    private void ForceAsDynamicSpawn(Component networkObject)
+    {
+        if (networkObject == null) return;
+
+        TrySetMember(networkObject, "IsSceneObject", (bool?)false);
+        TrySetMember(networkObject, "SceneOriginHandle", 0);
+        TrySetMember(networkObject, "NetworkSceneHandle", 0);
+    }
+
+    private void TryAssignServerTargetPlayer(ulong clientId)
+    {
+        if (GameManager.Instance == null || networkManagerComponent == null || networkManagerType == null) return;
+
+        try
+        {
+            object spawnManager = ReadMemberValue(networkManagerComponent, networkManagerType, "SpawnManager");
+            if (spawnManager == null) return;
+
+            MethodInfo getPlayerMethod = spawnManager.GetType().GetMethod("GetPlayerNetworkObject", BindingFlags.Instance | BindingFlags.Public);
+            if (getPlayerMethod == null) return;
+
+            object playerNetworkObject = getPlayerMethod.Invoke(spawnManager, new object[] { clientId });
+            if (playerNetworkObject is not Component playerComponent) return;
+
+            GameManager.Instance.playerTransform = playerComponent.transform;
+            Debug.Log($"[B2-R] Server target player assigned => clientId={clientId}, {DescribePlayerObject(playerComponent.gameObject)}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[B2-R] Assign server target player failed => clientId={clientId}, reason={ex.Message}");
+        }
+    }
+
+    private static void DisableLegacyScenePlayersInCurrentScene()
+    {
+        Player[] players = FindObjectsOfType<Player>(true);
+        int disabled = 0;
+
+        foreach (Player player in players)
+        {
+            if (player == null) continue;
+            GameObject go = player.gameObject;
+            if (go == null) continue;
+            if (!go.scene.IsValid() || !go.scene.isLoaded) continue;
+            if (go.hideFlags != HideFlags.None) continue;
+            if (go.name.StartsWith("[B2]", StringComparison.Ordinal) || go.name.StartsWith("[B2-R]", StringComparison.Ordinal)) continue;
+            if (!go.activeSelf) continue;
+
+            go.SetActive(false);
+            disabled++;
+        }
+
+        if (disabled > 0)
+        {
+            Debug.Log($"[B2-R] Legacy scene Player disabled => count={disabled}");
+        }
+    }
+
+    private static string DescribePlayerObject(GameObject go)
+    {
+        if (go == null) return "playerObject=null";
+
+        Renderer[] renderers = go.GetComponentsInChildren<Renderer>(true);
+        int enabledRenderers = renderers.Count(r => r != null && r.enabled);
+        int activeRenderers = renderers.Count(r => r != null && r.enabled && r.gameObject.activeInHierarchy);
+
+        NetworkPlayerController npc = go.GetComponent<NetworkPlayerController>();
+        string pos = go.transform.position.ToString("F2");
+        string sceneName = go.scene.IsValid() ? go.scene.name : "InvalidScene";
+
+        return $"target={go.name}, pos={pos}, scene={sceneName}, activeSelf={go.activeSelf}, activeInHierarchy={go.activeInHierarchy}, hasNPC={(npc != null)}, rendererTotal={renderers.Length}, rendererEnabled={enabledRenderers}, rendererActive={activeRenderers}";
     }
 
     private static object ReadMemberValue(object target, Type targetType, string memberName)

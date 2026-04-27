@@ -123,6 +123,7 @@ public class LocalPresentationBinder : MonoBehaviour
         int cameraBoundCount = ApplyCameraBinding(localPlayerObject.transform);
         ApplyHudBinding(localStatsPlayer);
         int joystickCount = ApplyJoystickBinding(true);
+        ApplyGameManagerBinding(localPlayerObject.transform);
 
         if ((cameraBoundCount <= 0 || joystickCount <= 0) && Time.unscaledTime >= nextMissingReferenceLogTime)
         {
@@ -136,7 +137,8 @@ public class LocalPresentationBinder : MonoBehaviour
         bool hasController = localPlayerController != null;
         bool hasPlayerStats = localStatsPlayer != null;
         string targetName = localPlayerObject != null ? localPlayerObject.name : "None";
-        Debug.Log($"[B5] Local presentation bind => owner={owner}, source={source}, target={targetName}, hasController={hasController}, cameraBoundCount={cameraBoundCount}, hudPlayerBound={hasPlayerStats}, joystickCount={joystickCount}, joystickVisible=True");
+        int disabledLegacyPlayers = DisableLegacyScenePlayers(localPlayerObject);
+        Debug.Log($"[B5] Local presentation bind => owner={owner}, source={source}, target={targetName}, hasController={hasController}, cameraBoundCount={cameraBoundCount}, hudPlayerBound={hasPlayerStats}, joystickCount={joystickCount}, legacyDisabled={disabledLegacyPlayers}, joystickVisible=True");
     }
 
     private static NetworkObject ResolveLocalPlayerObject(NetworkObject[] players)
@@ -244,5 +246,38 @@ public class LocalPresentationBinder : MonoBehaviour
         }
 
         return count;
+    }
+
+    private static void ApplyGameManagerBinding(Transform target)
+    {
+        if (GameManager.Instance == null) return;
+        GameManager.Instance.playerTransform = target;
+    }
+
+    private static int DisableLegacyScenePlayers(NetworkObject localPlayerObject)
+    {
+        if (localPlayerObject == null) return 0;
+
+        Player[] players = FindObjectsOfType<Player>(true);
+        int disabled = 0;
+        foreach (Player player in players)
+        {
+            if (player == null) continue;
+
+            GameObject go = player.gameObject;
+            if (go == null) continue;
+            if (go == localPlayerObject.gameObject) continue;
+            if (!go.scene.IsValid() || !go.scene.isLoaded) continue;
+            if (go.hideFlags != HideFlags.None) continue;
+
+            NetworkObject maybeNetworkObject = go.GetComponent<NetworkObject>();
+            if (maybeNetworkObject != null && maybeNetworkObject.IsSpawned) continue;
+            if (!go.activeSelf) continue;
+
+            go.SetActive(false);
+            disabled++;
+        }
+
+        return disabled;
     }
 }
