@@ -12,6 +12,7 @@ public class EnemyDataSO : ScriptableObject
     public string enemyName = "Enemy";
     public float baseMaxHealth = 50f;
     public float baseDamage = 10f;
+    public float baseMagicPower = 0f;
     public float baseMoveSpeed = 3f;
     public int baseDefanse = 2;
     public float baseMagicResistance = 0f;

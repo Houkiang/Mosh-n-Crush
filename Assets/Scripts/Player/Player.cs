@@ -3,42 +3,85 @@ using UnityEngine;
 
 public class Player : MonoBehaviour, ICombatant
 {
-    [Header("配置引用")]
+    [Header("Config")]
     [SerializeField] private LevelingDataSO levelingData;
 
-    [Header("属性设置")]
+    [Header("Base Stats")]
     [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float currentHealth = 100f;
     [SerializeField] private float defence = 5f;
     [SerializeField] private float magicResistance = 0f;
     [SerializeField] private float strength = 10f;
+    [SerializeField] private float magicPower = 0f;
     [SerializeField] private float healingPower = 0.5f;
     [SerializeField] private float cooldownReduction = 0f;
+    [SerializeField] private float critRateBonus = 0f;
+    [SerializeField] private float critDamageBonus = 0f;
     [SerializeField] private bool isInvincible = false;
 
-    [Header("经验与等级")]
+    [Header("Level")]
     [SerializeField] private int currentLevel = 1;
     [SerializeField] private int currentExperience = 0;
     [SerializeField] private int requiredExperience = 0;
 
+    private const float HealingInterval = 1f;
+
     private float healingTimer = 0f;
-    private float healingInterval = 1f;
+    private StatCollection stats;
 
     public Transform CombatTransform => transform;
     public bool IsAlive => gameObject.activeSelf && currentHealth > 0f;
+    public StatCollection Stats => stats;
     public int CurrentLevel => currentLevel;
-    public float MaxHealth => maxHealth;
+    public float MaxHealth => GetStatValue(StatType.MaxHealth, maxHealth);
     public float CurrentHealth => currentHealth;
-    public float HealingPower => healingPower;
-    public float Defence => defence;
-    public float MagicResistance => magicResistance;
-    public float Strength => strength;
-    public float CooldownReduction => cooldownReduction;
+    public float HealingPower => GetStatValue(StatType.HealingPower, healingPower);
+    public float Defence => GetStatValue(StatType.PhysicalDefense, defence);
+    public float MagicResistance => GetStatValue(StatType.MagicResistance, magicResistance);
+    public float Strength => GetStatValue(StatType.PhysicalAttack, strength);
+    public float MagicPower => GetStatValue(StatType.MagicPower, magicPower);
+    public float CooldownReduction => Mathf.Clamp(GetStatValue(StatType.CooldownReduction, cooldownReduction), 0f, 0.9f);
+    public float CritRate => Mathf.Clamp01(GetStatValue(StatType.CritRate, critRateBonus));
+    public float CritDamage => Mathf.Max(0f, GetStatValue(StatType.CritDamage, critDamageBonus));
 
     public Action<float, float> OnHealthChange;
     public Action<int> OnLevelUp;
     public Action<float> OnXpChange;
     public static event Action OnPlayerDied;
+
+    private void Awake()
+    {
+        EnsureStatsInitialized();
+        currentHealth = Mathf.Clamp(currentHealth, 0f, MaxHealth);
+    }
+
+    private void Start()
+    {
+        requiredExperience = levelingData != null
+            ? levelingData.GetRequiredExperience(currentLevel)
+            : Mathf.Max(requiredExperience, 1);
+
+        OnHealthChange?.Invoke(currentHealth, MaxHealth);
+        OnXpChange?.Invoke(0f);
+    }
+
+    private void Update()
+    {
+        healingTimer -= Time.deltaTime;
+        if (healingTimer > 0f)
+        {
+            return;
+        }
+
+        healingTimer = HealingInterval;
+        if (currentHealth >= MaxHealth)
+        {
+            return;
+        }
+
+        currentHealth = Mathf.Min(currentHealth + HealingPower, MaxHealth);
+        OnHealthChange?.Invoke(currentHealth, MaxHealth);
+    }
 
     public void GainExperience(int amount)
     {
@@ -51,62 +94,69 @@ public class Player : MonoBehaviour, ICombatant
         OnXpChange?.Invoke(xpProgress);
     }
 
-    private void CheckLevelUp()
-    {
-        while (currentExperience >= requiredExperience)
-        {
-            currentExperience -= requiredExperience;
-            LevelUp();
-        }
-    }
-
-    private void LevelUp()
-    {
-        currentLevel++;
-
-        if (levelingData != null)
-        {
-            requiredExperience = levelingData.GetRequiredExperience(currentLevel);
-        }
-        else
-        {
-            requiredExperience = Mathf.CeilToInt(requiredExperience * 1.2f);
-        }
-
-        OnLevelUp?.Invoke(currentLevel);
-    }
-
     public void IncreaseMaxHealth(float amount)
     {
-        maxHealth += amount;
-        currentHealth += amount;
-        OnHealthChange?.Invoke(currentHealth, maxHealth);
+        EnsureStatsInitialized();
+
+        stats.AddToBaseValue(StatType.MaxHealth, amount);
+        SyncSerializedStatsFromCollection();
+
+        currentHealth = Mathf.Clamp(currentHealth + amount, 0f, MaxHealth);
+        OnHealthChange?.Invoke(currentHealth, MaxHealth);
     }
 
     public void IncreaseHealingPower(float amount)
     {
-        healingPower += amount;
+        AddToBaseStat(StatType.HealingPower, amount);
     }
 
     public void IncreaseStrength(float amount)
     {
-        strength += amount;
+        AddToBaseStat(StatType.PhysicalAttack, amount);
+    }
+
+    public void IncreaseMagicPower(float amount)
+    {
+        AddToBaseStat(StatType.MagicPower, amount);
     }
 
     public void IncreaseDefence(float amount)
     {
-        defence += amount;
+        AddToBaseStat(StatType.PhysicalDefense, amount);
     }
 
     public void IncreaseMagicResistance(float amount)
     {
-        magicResistance += amount;
+        AddToBaseStat(StatType.MagicResistance, amount);
     }
 
     public void IncreaseCooldownReduction(float amount)
     {
-        cooldownReduction += amount;
-        cooldownReduction = Mathf.Clamp(cooldownReduction, 0f, 0.9f);
+        EnsureStatsInitialized();
+
+        float nextValue = Mathf.Clamp(
+            stats.GetBaseValue(StatType.CooldownReduction, cooldownReduction) + amount,
+            0f,
+            0.9f);
+
+        stats.SetBaseValue(StatType.CooldownReduction, nextValue);
+        SyncSerializedStatsFromCollection();
+    }
+
+    public void IncreaseCritRate(float amount)
+    {
+        EnsureStatsInitialized();
+
+        float nextValue = Mathf.Clamp01(
+            stats.GetBaseValue(StatType.CritRate, critRateBonus) + amount);
+
+        stats.SetBaseValue(StatType.CritRate, nextValue);
+        SyncSerializedStatsFromCollection();
+    }
+
+    public void IncreaseCritDamage(float amount)
+    {
+        AddToBaseStat(StatType.CritDamage, amount);
     }
 
     public void TakeDamage(float damage)
@@ -125,17 +175,18 @@ public class Player : MonoBehaviour, ICombatant
 
     public DamageResult ReceiveDamage(DamageContext context)
     {
-        DamageResult result = CombatResolver.ResolveDamage(context, defence, magicResistance, isInvincible);
+        EnsureStatsInitialized();
+
+        DamageResult result = CombatResolver.ResolveDamage(context, stats, isInvincible);
         if (result.FinalDamage <= 0f)
         {
             return result;
         }
 
-        currentHealth -= result.FinalDamage;
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
-        OnHealthChange?.Invoke(currentHealth, maxHealth);
+        currentHealth = Mathf.Clamp(currentHealth - result.FinalDamage, 0f, MaxHealth);
+        OnHealthChange?.Invoke(currentHealth, MaxHealth);
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0f)
         {
             Die();
             result.TargetDied = true;
@@ -148,31 +199,87 @@ public class Player : MonoBehaviour, ICombatant
     {
     }
 
+    private void CheckLevelUp()
+    {
+        if (requiredExperience <= 0)
+        {
+            return;
+        }
+
+        while (currentExperience >= requiredExperience)
+        {
+            currentExperience -= requiredExperience;
+            LevelUp();
+        }
+    }
+
+    private void LevelUp()
+    {
+        currentLevel++;
+
+        if (levelingData != null)
+        {
+            requiredExperience = levelingData.GetRequiredExperience(currentLevel);
+        }
+        else
+        {
+            requiredExperience = Mathf.CeilToInt(Mathf.Max(requiredExperience, 1) * 1.2f);
+        }
+
+        OnLevelUp?.Invoke(currentLevel);
+    }
+
     private void Die()
     {
-        Debug.Log("玩家死亡！游戏结束");
+        Debug.Log("Player died.");
         OnPlayerDied?.Invoke();
         gameObject.SetActive(false);
     }
 
-    void Start()
+    private void EnsureStatsInitialized()
     {
-        requiredExperience = levelingData.GetRequiredExperience(currentLevel);
-        OnHealthChange?.Invoke(currentHealth, maxHealth);
-        OnXpChange?.Invoke(0f);
+        if (stats != null)
+        {
+            return;
+        }
+
+        stats = new StatCollection();
+        stats.SetBaseValue(StatType.MaxHealth, maxHealth);
+        stats.SetBaseValue(StatType.PhysicalDefense, defence);
+        stats.SetBaseValue(StatType.MagicResistance, magicResistance);
+        stats.SetBaseValue(StatType.PhysicalAttack, strength);
+        stats.SetBaseValue(StatType.MagicPower, magicPower);
+        stats.SetBaseValue(StatType.HealingPower, healingPower);
+        stats.SetBaseValue(StatType.CooldownReduction, Mathf.Clamp(cooldownReduction, 0f, 0.9f));
+        stats.SetBaseValue(StatType.CritRate, Mathf.Clamp01(critRateBonus));
+        stats.SetBaseValue(StatType.CritDamage, Mathf.Max(0f, critDamageBonus));
+
+        SyncSerializedStatsFromCollection();
     }
 
-    void Update()
+    private void AddToBaseStat(StatType statType, float amount)
     {
-        healingTimer -= Time.deltaTime;
-        if (healingTimer <= 0f)
-        {
-            healingTimer = healingInterval;
-            if (currentHealth < maxHealth)
-            {
-                currentHealth = Math.Min(currentHealth + healingPower, maxHealth);
-                OnHealthChange?.Invoke(currentHealth, maxHealth);
-            }
-        }
+        EnsureStatsInitialized();
+        stats.AddToBaseValue(statType, amount);
+        SyncSerializedStatsFromCollection();
+    }
+
+    private float GetStatValue(StatType statType, float fallback = 0f)
+    {
+        EnsureStatsInitialized();
+        return stats.GetValue(statType, fallback);
+    }
+
+    private void SyncSerializedStatsFromCollection()
+    {
+        maxHealth = stats.GetValue(StatType.MaxHealth, maxHealth);
+        defence = stats.GetValue(StatType.PhysicalDefense, defence);
+        magicResistance = stats.GetValue(StatType.MagicResistance, magicResistance);
+        strength = stats.GetValue(StatType.PhysicalAttack, strength);
+        magicPower = stats.GetValue(StatType.MagicPower, magicPower);
+        healingPower = stats.GetValue(StatType.HealingPower, healingPower);
+        cooldownReduction = Mathf.Clamp(stats.GetValue(StatType.CooldownReduction, cooldownReduction), 0f, 0.9f);
+        critRateBonus = Mathf.Clamp01(stats.GetValue(StatType.CritRate, critRateBonus));
+        critDamageBonus = Mathf.Max(0f, stats.GetValue(StatType.CritDamage, critDamageBonus));
     }
 }

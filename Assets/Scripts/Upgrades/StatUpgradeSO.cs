@@ -1,15 +1,24 @@
-
 using UnityEngine;
 
-// 2. 属性增强类：处理数值
 [CreateAssetMenu(menuName = "Game/Upgrades/Stat Upgrade")]
 public class StatUpgradeSO : UpgradeDataSO
 {
-    public enum StatType { MaxHealth, Strength, Defence, Cooldown, HealingPower }
-    
-    [Header("属性设置")]
+    public enum StatType
+    {
+        MaxHealth,
+        Strength,
+        Defence,
+        Cooldown,
+        HealingPower,
+        MagicPower,
+        MagicResistance,
+        CritRate,
+        CritDamage
+    }
+
+    [Header("Stat Settings")]
     public StatType statType;
-    public float value; // 增加的数值
+    public float value;
 
     public override void Apply(Player player)
     {
@@ -30,7 +39,20 @@ public class StatUpgradeSO : UpgradeDataSO
             case StatType.HealingPower:
                 player.IncreaseHealingPower(value);
                 break;
+            case StatType.MagicPower:
+                player.IncreaseMagicPower(value);
+                break;
+            case StatType.MagicResistance:
+                player.IncreaseMagicResistance(value);
+                break;
+            case StatType.CritRate:
+                player.IncreaseCritRate(value);
+                break;
+            case StatType.CritDamage:
+                player.IncreaseCritDamage(value);
+                break;
         }
-        Debug.Log($"应用属性增益: {upgradeName}");
+
+        Debug.Log($"Applied stat upgrade: {upgradeName}");
     }
 }

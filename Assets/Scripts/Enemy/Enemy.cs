@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour, ICombatant
 {
-    [Header("核心数据")]
+    [Header("Core Data")]
     [SerializeField] private EnemyDataSO enemyData;
 
-    [Header("运行时属性(只读/调试)")]
+    [Header("Runtime Stats")]
     [SerializeField] private float currentHealth;
     [SerializeField] private float currentDamage;
     [SerializeField] private float currentMoveSpeed;
@@ -19,9 +19,11 @@ public class Enemy : MonoBehaviour, ICombatant
     private Collider enemyCollider;
     private bool isDead = false;
     private float maxHealth;
+    private StatCollection stats;
 
     public Transform CombatTransform => transform;
     public bool IsAlive => !isDead && gameObject.activeSelf;
+    public StatCollection Stats => stats;
     public float CurrentDamage => currentDamage;
     public float CurrentMoveSpeed => currentMoveSpeed;
     public Transform PlayerTransform => playerTransform;
@@ -32,16 +34,19 @@ public class Enemy : MonoBehaviour, ICombatant
     public static event Action<Enemy> OnEnemyKilled;
     public event Action<float, float> OnHealthChanged;
 
-    void Awake()
+    private void Awake()
     {
         movement = GetComponent<EnemyMovement>();
         enemyCollider = GetComponent<Collider>();
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
         isDead = false;
-        if (enemyCollider != null) enemyCollider.enabled = true;
+        if (enemyCollider != null)
+        {
+            enemyCollider.enabled = true;
+        }
     }
 
     public void Initialize(EnemyDataSO data, float gameTime)
@@ -54,13 +59,10 @@ public class Enemy : MonoBehaviour, ICombatant
         }
 
         float timeMultiplier = 1f + (gameTime / 60f) * 0.1f;
-        maxHealth = data.baseMaxHealth * timeMultiplier;
+        BuildStats(data, timeMultiplier);
+
         currentHealth = maxHealth;
-        currentDamage = data.baseDamage * timeMultiplier;
-        currentDefence = data.baseDefanse * timeMultiplier;
-        currentMagicResistance = data.baseMagicResistance * timeMultiplier;
-        currentMoveSpeed = data.baseMoveSpeed;
-        experienceReward = (int)(data.experienceReward * timeMultiplier);
+        experienceReward = Mathf.RoundToInt(data.experienceReward * timeMultiplier);
 
         if (movement != null)
         {
@@ -74,11 +76,11 @@ public class Enemy : MonoBehaviour, ICombatant
         {
             Source = gameObject,
             Target = target,
-            BaseDamage = currentDamage,
+            BaseDamage = GetAttackPowerForDamageType(),
             DamageType = enemyData.attackDamageType,
             CanCrit = enemyData.canCrit,
-            CritRate = enemyData.critRate,
-            CritMultiplier = enemyData.critMultiplier,
+            CritRate = Mathf.Clamp01(enemyData.critRate + GetStatValue(StatType.CritRate)),
+            CritMultiplier = Mathf.Max(1f, enemyData.critMultiplier + GetStatValue(StatType.CritDamage)),
             KnockbackForce = 0f,
             KnockbackDuration = 0f
         };
@@ -100,7 +102,7 @@ public class Enemy : MonoBehaviour, ICombatant
 
     public DamageResult ReceiveDamage(DamageContext context)
     {
-        DamageResult result = CombatResolver.ResolveDamage(context, currentDefence, currentMagicResistance);
+        DamageResult result = CombatResolver.ResolveDamage(context, stats);
         if (isDead || result.FinalDamage <= 0f)
         {
             return result;
@@ -112,7 +114,7 @@ public class Enemy : MonoBehaviour, ICombatant
         DamageTextManager.Instance.ShowDamage(popupPos, result.FinalDamage, result.IsCritical);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0f)
         {
             Die();
             result.TargetDied = true;
@@ -123,18 +125,12 @@ public class Enemy : MonoBehaviour, ICombatant
 
     public void TakeKnockback(Vector3 sourcePosition, float force, float stunDuration)
     {
-        if (isDead || movement == null) return;
+        if (isDead || movement == null)
+        {
+            return;
+        }
+
         movement.ApplyKnockback(sourcePosition, force, stunDuration);
-    }
-
-    private void Die()
-    {
-        if (isDead) return;
-
-        isDead = true;
-        Debug.Log($"{enemyData.enemyName} 死亡");
-        if (enemyCollider != null) enemyCollider.enabled = false;
-        OnEnemyKilled?.Invoke(this);
     }
 
     public void Despawn()
@@ -147,5 +143,67 @@ public class Enemy : MonoBehaviour, ICombatant
         {
             Destroy(gameObject);
         }
+    }
+
+    private void Die()
+    {
+        if (isDead)
+        {
+            return;
+        }
+
+        isDead = true;
+        Debug.Log($"{enemyData.enemyName} died");
+        if (enemyCollider != null)
+        {
+            enemyCollider.enabled = false;
+        }
+
+        OnEnemyKilled?.Invoke(this);
+    }
+
+    private void BuildStats(EnemyDataSO data, float timeMultiplier)
+    {
+        if (stats == null)
+        {
+            stats = new StatCollection();
+        }
+        else
+        {
+            stats.Clear();
+        }
+
+        float scaledHealth = data.baseMaxHealth * timeMultiplier;
+        float scaledDamage = data.baseDamage * timeMultiplier;
+        float scaledMagicPower = data.baseMagicPower > 0f
+            ? data.baseMagicPower * timeMultiplier
+            : scaledDamage;
+
+        stats.SetBaseValue(StatType.MaxHealth, scaledHealth);
+        stats.SetBaseValue(StatType.PhysicalAttack, scaledDamage);
+        stats.SetBaseValue(StatType.MagicPower, scaledMagicPower);
+        stats.SetBaseValue(StatType.PhysicalDefense, data.baseDefanse * timeMultiplier);
+        stats.SetBaseValue(StatType.MagicResistance, data.baseMagicResistance * timeMultiplier);
+        stats.SetBaseValue(StatType.MoveSpeed, data.baseMoveSpeed);
+
+        maxHealth = stats.GetValue(StatType.MaxHealth, scaledHealth);
+        currentDefence = stats.GetValue(StatType.PhysicalDefense, 0f);
+        currentMagicResistance = stats.GetValue(StatType.MagicResistance, 0f);
+        currentMoveSpeed = stats.GetValue(StatType.MoveSpeed, data.baseMoveSpeed);
+        currentDamage = GetAttackPowerForDamageType();
+    }
+
+    private float GetAttackPowerForDamageType()
+    {
+        StatType attackStat = enemyData != null && enemyData.attackDamageType == DamageType.Magical
+            ? StatType.MagicPower
+            : StatType.PhysicalAttack;
+
+        return GetStatValue(attackStat);
+    }
+
+    private float GetStatValue(StatType statType, float fallback = 0f)
+    {
+        return stats != null ? stats.GetValue(statType, fallback) : fallback;
     }
 }

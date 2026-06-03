@@ -4,6 +4,21 @@ public static class CombatResolver
 {
     public static DamageResult ResolveDamage(
         DamageContext context,
+        StatCollection targetStats,
+        bool isInvincible = false)
+    {
+        float physicalDefense = targetStats != null
+            ? targetStats.GetValue(StatType.PhysicalDefense)
+            : 0f;
+        float magicResistance = targetStats != null
+            ? targetStats.GetValue(StatType.MagicResistance)
+            : 0f;
+
+        return ResolveDamage(context, physicalDefense, magicResistance, isInvincible);
+    }
+
+    public static DamageResult ResolveDamage(
+        DamageContext context,
         float physicalDefense,
         float magicResistance,
         bool isInvincible = false)

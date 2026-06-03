@@ -39,6 +39,9 @@ public abstract class WeaponBase : MonoBehaviour
 
     protected DamageContext CreateDamageContext(GameObject target = null)
     {
+        float critRateBonus = playerStats != null ? playerStats.CritRate : 0f;
+        float critDamageBonus = playerStats != null ? playerStats.CritDamage : 0f;
+
         return new DamageContext
         {
             Source = playerTransform != null ? playerTransform.gameObject : gameObject,
@@ -46,8 +49,8 @@ public abstract class WeaponBase : MonoBehaviour
             BaseDamage = GetDamageAfterPlayer(),
             DamageType = weaponData.damageType,
             CanCrit = weaponData.canCrit,
-            CritRate = weaponData.critRate,
-            CritMultiplier = weaponData.critMultiplier,
+            CritRate = Mathf.Clamp01(weaponData.critRate + critRateBonus),
+            CritMultiplier = Mathf.Max(1f, weaponData.critMultiplier + critDamageBonus),
             KnockbackForce = currentKnockback,
             KnockbackDuration = currentKnockbackDuration
         };
@@ -69,8 +72,16 @@ public abstract class WeaponBase : MonoBehaviour
 
     protected float GetDamageAfterPlayer()
     {
-        float strengthBonus = playerStats != null ? playerStats.Strength : 0f;
-        return currentDamage + strengthBonus;
+        if (playerStats == null)
+        {
+            return currentDamage;
+        }
+
+        float offensiveBonus = weaponData.damageType == DamageType.Magical
+            ? playerStats.MagicPower
+            : playerStats.Strength;
+
+        return currentDamage + offensiveBonus;
     }
 
     public void IncreaseDamage(float amount)

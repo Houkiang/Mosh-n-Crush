@@ -26,6 +26,7 @@ public class WeaponDataSO : ScriptableObject
     public float knockbackForce = 5f;
     public float knockbackDuration = 0.4f;
     public DamageType damageType = DamageType.Physical;
+    [Tooltip("If false, crit values on this weapon are ignored.")]
     public bool canCrit = false;
     [Range(0f, 1f)] public float critRate = 0f;
     public float critMultiplier = 1.5f;
