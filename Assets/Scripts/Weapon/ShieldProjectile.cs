@@ -1,12 +1,9 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class ShieldProjectile : MonoBehaviour
 {
-    private ShieldWeapon controller; // 引用控制器以获取最新数值
+    private ShieldWeapon controller;
 
-
-    // 初始化方法
     public void Initialize(ShieldWeapon weaponController)
     {
         controller = weaponController;
@@ -14,25 +11,22 @@ public class ShieldProjectile : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // 检查是否是敌人层级
-        if (other.CompareTag("Enemy"))
+        if (!other.CompareTag("Enemy")) return;
+
+        ICombatant target = other.GetComponent(typeof(ICombatant)) as ICombatant;
+        if (target == null) return;
+
+        if (controller == null)
         {
-            IDamageable target = other.GetComponent<IDamageable>();
-            if (target != null)
-            {
-                if(controller == null) Debug.LogError("ShieldProjectile 未正确初始化控制器引用！");
-                // 1. 获取伤害 (通过控制器计算，包含玩家属性加成)
-                float damage = controller.GetActualDamage();
-                
-                // 2. 造成伤害
-                target.TakeDamage(damage);
+            Debug.LogError("ShieldProjectile 未正确初始化控制器引用！");
+            return;
+        }
 
-                // 3. 造成击退 (方向：从玩家中心 -> 敌人)
-                Vector3 knockbackDir = (other.transform.position - controller.GetPlayerPosition()).normalized;
-                target.TakeKnockback(controller.GetPlayerPosition(), controller.GetKnockbackForce(), controller.GetKnockbackDuration());
-                
-
-            }
+        DamageContext context = controller.CreateShieldDamageContext(other.gameObject);
+        DamageResult result = target.ReceiveDamage(context);
+        if (result.FinalDamage > 0f)
+        {
+            target.TakeKnockback(controller.GetPlayerPosition(), context.KnockbackForce, context.KnockbackDuration);
         }
     }
 }

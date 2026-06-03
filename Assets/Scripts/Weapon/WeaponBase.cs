@@ -1,23 +1,21 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class WeaponBase : MonoBehaviour
 {
-    public WeaponDataSO weaponData; // 当前武器的数据引用
+    public WeaponDataSO weaponData;
 
-    // 运行时属性 (因为游戏里可能有升级系统改变这些值，所以不直接用 SO 的值)
-    [Header("运行时属性,勿修改")]
+    [Header("运行时属性(勿直接修改)")]
     [SerializeField] protected float currentDamage;
     [SerializeField] protected float currentCooldown;
     [SerializeField] protected float currentRange;
     [SerializeField] protected float currentKnockback;
     [SerializeField] protected float currentKnockbackDuration;
     [SerializeField] protected int currentWeaponCount;
-    [SerializeField] protected int weaponCount=1 ; // 初始数量
+    [SerializeField] protected int weaponCount = 1;
+
     protected float cooldownTimer;
     protected Transform playerTransform;
-    protected int enemyLayerMask; // 缓存层级掩码，提高性能
+    protected int enemyLayerMask;
     protected WeaponManager weaponManager;
     protected Player playerStats;
 
@@ -27,7 +25,7 @@ public abstract class WeaponBase : MonoBehaviour
         playerTransform = owner;
         weaponManager = manager;
         playerStats = weaponManager.player.GetComponent<Player>();
-        // 初始化运行时数值
+
         currentDamage = data.damage;
         currentCooldown = data.cooldown;
         currentRange = data.attackRange;
@@ -35,20 +33,32 @@ public abstract class WeaponBase : MonoBehaviour
         currentKnockback = data.knockbackForce;
         currentKnockbackDuration = data.knockbackDuration;
 
-        // 重置计时器
-        cooldownTimer = Random.Range(0f,currentCooldown); 
-
-        // 自动获取 Enemy 层级 
+        cooldownTimer = Random.Range(0f, currentCooldown);
         enemyLayerMask = LayerMask.GetMask("Enemy");
+    }
+
+    protected DamageContext CreateDamageContext(GameObject target = null)
+    {
+        return new DamageContext
+        {
+            Source = playerTransform != null ? playerTransform.gameObject : gameObject,
+            Target = target,
+            BaseDamage = GetDamageAfterPlayer(),
+            DamageType = weaponData.damageType,
+            CanCrit = weaponData.canCrit,
+            CritRate = weaponData.critRate,
+            CritMultiplier = weaponData.critMultiplier,
+            KnockbackForce = currentKnockback,
+            KnockbackDuration = currentKnockbackDuration
+        };
     }
 
     protected virtual void Update()
     {
         if (playerTransform == null) return;
-        // 计算实际冷却时间
-        float reduction = (playerStats != null) ? playerStats.CooldownReduction : 0f;
-        // 公式：原冷却 * (1 - 缩减比例)
-        float actualCooldown = currentCooldown * (1f - reduction); 
+
+        float reduction = playerStats != null ? playerStats.CooldownReduction : 0f;
+        float actualCooldown = currentCooldown * (1f - reduction);
         cooldownTimer -= Time.deltaTime;
         if (cooldownTimer <= 0f)
         {
@@ -56,39 +66,32 @@ public abstract class WeaponBase : MonoBehaviour
             cooldownTimer = actualCooldown;
         }
     }
+
     protected float GetDamageAfterPlayer()
     {
-        float baseDmg = currentDamage;
-        float strengthBonus = 0f;
-
-        // 安全检查
-        if (playerStats != null)
-        {
-            strengthBonus = playerStats.Strength;
-        }
-
-
-        return baseDmg + strengthBonus;
-
+        float strengthBonus = playerStats != null ? playerStats.Strength : 0f;
+        return currentDamage + strengthBonus;
     }
+
     public void IncreaseDamage(float amount)
     {
         currentDamage += amount;
     }
+
     public void ReduceCooldown(float amount)
     {
-        currentCooldown = Mathf.Max(0.1f, currentCooldown - amount); // 最小冷却时间0.1秒
-    }
-    public virtual void IncreaseWeaponCount(int amount)
-    {
-        //只有ShieldWeapon会重写这个方法
-    }
-    public void IncreaseKnockback(float amount)
-    {
-        currentKnockback *= (1+amount);
-        currentKnockbackDuration *= (1+amount/2);
+        currentCooldown = Mathf.Max(0.1f, currentCooldown - amount);
     }
 
-    // 子类必须实现这个
+    public virtual void IncreaseWeaponCount(int amount)
+    {
+    }
+
+    public void IncreaseKnockback(float amount)
+    {
+        currentKnockback *= 1 + amount;
+        currentKnockbackDuration *= 1 + amount / 2f;
+    }
+
     protected abstract void Attack();
 }
