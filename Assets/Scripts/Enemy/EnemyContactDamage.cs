@@ -1,51 +1,36 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Enemy))]
-public class EnemyContactDamage : MonoBehaviour
+public class EnemyContactDamage : EnemyAttackBase
 {
-    [Header("碰撞伤害设置")]
-    [SerializeField] private float damageCooldown = 0.35f;
+    [Header("Contact Attack")]
     [SerializeField] private bool useContinuousDamage = true;
 
-    private Enemy enemyCore;
-    private float damageTimer = 0f;
-
-    void Awake()
+    protected override void Update()
     {
-        enemyCore = GetComponent<Enemy>();
+        base.Update();
     }
 
-    void OnEnable()
+    private void OnCollisionStay(Collision collision)
     {
-        damageTimer = 0f;
-    }
-
-    void Update()
-    {
-        if (damageTimer > 0)
+        if (!IsAttackReady() || !collision.gameObject.CompareTag("Player"))
         {
-            damageTimer -= Time.deltaTime;
+            return;
         }
-    }
 
-    void OnCollisionStay(Collision collision)
-    {
-        if (enemyCore.IsDead) return;
-
-        if (damageTimer <= 0f && collision.gameObject.CompareTag("Player"))
-        {
-            TryDealDamage(collision.gameObject);
-        }
+        TryDealDamage(collision.gameObject);
     }
 
     private void TryDealDamage(GameObject target)
     {
         IDamageReceiver damageReceiver = target.GetComponentInParent(typeof(IDamageReceiver)) as IDamageReceiver;
-        if (damageReceiver != null)
+        if (damageReceiver == null)
         {
-            DamageContext context = enemyCore.CreateDamageContext(target);
-            damageReceiver.ReceiveDamage(context);
-            damageTimer = useContinuousDamage ? damageCooldown : float.MaxValue;
+            return;
         }
+
+        DamageContext context = enemyCore.CreateDamageContext(target);
+        damageReceiver.ReceiveDamage(context);
+        RaiseAttack();
+        attackTimer = useContinuousDamage ? attackCooldown : float.MaxValue;
     }
 }
