@@ -46,12 +46,12 @@ public class EnemyProjectile : MonoBehaviour
 
         if (other.CompareTag("Player"))
         {
-            var player = other.GetComponentInParent<Player>();
-            if (player != null)
+            IDamageReceiver damageReceiver = other.GetComponentInParent(typeof(IDamageReceiver)) as IDamageReceiver;
+            if (damageReceiver != null)
             {
                 DamageContext context = damageContext;
-                context.Target = player.gameObject;
-                player.ReceiveDamage(context);
+                context.Target = other.gameObject;
+                damageReceiver.ReceiveDamage(context);
             }
             Despawn();
         }

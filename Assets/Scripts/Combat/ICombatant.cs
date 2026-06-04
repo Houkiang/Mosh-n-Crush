@@ -1,9 +1,8 @@
 using UnityEngine;
 
-public interface ICombatant : IDamageable
+public interface ICombatant : IDamageReceiver, IKnockbackable
 {
     Transform CombatTransform { get; }
     bool IsAlive { get; }
     StatCollection Stats { get; }
-    DamageResult ReceiveDamage(DamageContext context);
 }

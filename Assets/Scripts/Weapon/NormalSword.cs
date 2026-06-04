@@ -43,14 +43,16 @@ public class NormalSword : WeaponBase
 
             if (angle <= weaponData.attackAngle / 2f)
             {
-                ICombatant target = hit.GetComponent(typeof(ICombatant)) as ICombatant;
-                if (target == null) continue;
+                IDamageReceiver damageReceiver = hit.GetComponent(typeof(IDamageReceiver)) as IDamageReceiver;
+                if (damageReceiver == null) continue;
+
+                IKnockbackable knockbackable = hit.GetComponent(typeof(IKnockbackable)) as IKnockbackable;
 
                 DamageContext context = CreateDamageContext(hit.gameObject);
-                DamageResult result = target.ReceiveDamage(context);
-                if (result.FinalDamage > 0f)
+                DamageResult result = damageReceiver.ReceiveDamage(context);
+                if (result.FinalDamage > 0f && knockbackable != null)
                 {
-                    target.TakeKnockback(playerTransform.position, context.KnockbackForce, context.KnockbackDuration);
+                    knockbackable.TakeKnockback(playerTransform.position, context.KnockbackForce, context.KnockbackDuration);
                 }
             }
         }

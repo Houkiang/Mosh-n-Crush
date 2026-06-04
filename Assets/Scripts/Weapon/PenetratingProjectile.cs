@@ -37,15 +37,16 @@ public class PenetratingProjectile : MonoBehaviour
             if (hitHistory.Contains(other.gameObject)) return;
             hitHistory.Add(other.gameObject);
 
-            ICombatant target = other.GetComponent(typeof(ICombatant)) as ICombatant;
-            if (target != null)
+            IDamageReceiver damageReceiver = other.GetComponent(typeof(IDamageReceiver)) as IDamageReceiver;
+            if (damageReceiver != null)
             {
+                IKnockbackable knockbackable = other.GetComponent(typeof(IKnockbackable)) as IKnockbackable;
                 DamageContext context = damageContext;
                 context.Target = other.gameObject;
-                DamageResult result = target.ReceiveDamage(context);
-                if (result.FinalDamage > 0f)
+                DamageResult result = damageReceiver.ReceiveDamage(context);
+                if (result.FinalDamage > 0f && knockbackable != null)
                 {
-                    target.TakeKnockback(transform.position, context.KnockbackForce, context.KnockbackDuration);
+                    knockbackable.TakeKnockback(transform.position, context.KnockbackForce, context.KnockbackDuration);
                 }
             }
         }

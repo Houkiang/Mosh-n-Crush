@@ -13,8 +13,10 @@ public class ShieldProjectile : MonoBehaviour
     {
         if (!other.CompareTag("Enemy")) return;
 
-        ICombatant target = other.GetComponent(typeof(ICombatant)) as ICombatant;
-        if (target == null) return;
+        IDamageReceiver damageReceiver = other.GetComponent(typeof(IDamageReceiver)) as IDamageReceiver;
+        if (damageReceiver == null) return;
+
+        IKnockbackable knockbackable = other.GetComponent(typeof(IKnockbackable)) as IKnockbackable;
 
         if (controller == null)
         {
@@ -23,10 +25,10 @@ public class ShieldProjectile : MonoBehaviour
         }
 
         DamageContext context = controller.CreateShieldDamageContext(other.gameObject);
-        DamageResult result = target.ReceiveDamage(context);
-        if (result.FinalDamage > 0f)
+        DamageResult result = damageReceiver.ReceiveDamage(context);
+        if (result.FinalDamage > 0f && knockbackable != null)
         {
-            target.TakeKnockback(controller.GetPlayerPosition(), context.KnockbackForce, context.KnockbackDuration);
+            knockbackable.TakeKnockback(controller.GetPlayerPosition(), context.KnockbackForce, context.KnockbackDuration);
         }
     }
 }

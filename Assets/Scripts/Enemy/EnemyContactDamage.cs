@@ -40,11 +40,11 @@ public class EnemyContactDamage : MonoBehaviour
 
     private void TryDealDamage(GameObject target)
     {
-        var player = target.GetComponent<Player>();
-        if (player != null)
+        IDamageReceiver damageReceiver = target.GetComponentInParent(typeof(IDamageReceiver)) as IDamageReceiver;
+        if (damageReceiver != null)
         {
-            DamageContext context = enemyCore.CreateDamageContext(player.gameObject);
-            player.ReceiveDamage(context);
+            DamageContext context = enemyCore.CreateDamageContext(target);
+            damageReceiver.ReceiveDamage(context);
             damageTimer = useContinuousDamage ? damageCooldown : float.MaxValue;
         }
     }
