@@ -3,11 +3,11 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewEnemyData", menuName = "Game/Enemy Data")]
 public class EnemyDataSO : ScriptableObject
 {
-    [Header("资源配置")]
-    [Tooltip("该敌人对应的预制体")]
+    [Header("Prefab")]
+    [Tooltip("Enemy prefab spawned by the wave system.")]
     public GameObject enemyPrefab;
 
-    [Header("基础属性")]
+    [Header("Base Stats")]
     public EnemyType enemyType = EnemyType.Normal;
     public string enemyName = "Enemy";
     public float baseMaxHealth = 50f;
@@ -17,13 +17,14 @@ public class EnemyDataSO : ScriptableObject
     public int baseDefanse = 2;
     public float baseMagicResistance = 0f;
 
-    [Header("攻击设置")]
+    [Header("Attack")]
     public DamageType attackDamageType = DamageType.Physical;
     public bool canCrit = false;
     [Range(0f, 1f)] public float critRate = 0f;
     public float critMultiplier = 1.5f;
+    public StatusEffectDataSO[] onHitStatusEffects;
 
-    [Header("奖励")]
+    [Header("Rewards")]
     public int experienceReward = 10;
     public GameObject dropPrefab;
 }

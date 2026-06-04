@@ -4,7 +4,7 @@ public abstract class WeaponBase : MonoBehaviour
 {
     public WeaponDataSO weaponData;
 
-    [Header("运行时属性(勿直接修改)")]
+    [Header("Runtime Stats")]
     [SerializeField] protected float currentDamage;
     [SerializeField] protected float currentCooldown;
     [SerializeField] protected float currentRange;
@@ -52,13 +52,17 @@ public abstract class WeaponBase : MonoBehaviour
             CritRate = Mathf.Clamp01(weaponData.critRate + critRateBonus),
             CritMultiplier = Mathf.Max(1f, weaponData.critMultiplier + critDamageBonus),
             KnockbackForce = currentKnockback,
-            KnockbackDuration = currentKnockbackDuration
+            KnockbackDuration = currentKnockbackDuration,
+            StatusEffects = StatusEffectApplication.FromData(weaponData.onHitStatusEffects)
         };
     }
 
     protected virtual void Update()
     {
-        if (playerTransform == null) return;
+        if (playerTransform == null)
+        {
+            return;
+        }
 
         float reduction = playerStats != null ? playerStats.CooldownReduction : 0f;
         float actualCooldown = currentCooldown * (1f - reduction);
@@ -100,8 +104,8 @@ public abstract class WeaponBase : MonoBehaviour
 
     public void IncreaseKnockback(float amount)
     {
-        currentKnockback *= 1 + amount;
-        currentKnockbackDuration *= 1 + amount / 2f;
+        currentKnockback *= 1f + amount;
+        currentKnockbackDuration *= 1f + amount / 2f;
     }
 
     protected abstract void Attack();

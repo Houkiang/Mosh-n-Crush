@@ -11,4 +11,5 @@ public struct DamageContext
     public float CritMultiplier;
     public float KnockbackForce;
     public float KnockbackDuration;
+    public StatusEffectApplication[] StatusEffects;
 }

@@ -28,6 +28,7 @@ public class Player : MonoBehaviour, ICombatant
 
     private float healingTimer = 0f;
     private StatCollection stats;
+    private StatusController statusController;
 
     public Transform CombatTransform => transform;
     public bool IsAlive => gameObject.activeSelf && currentHealth > 0f;
@@ -52,6 +53,13 @@ public class Player : MonoBehaviour, ICombatant
     private void Awake()
     {
         EnsureStatsInitialized();
+        statusController = GetComponent<StatusController>();
+        if (statusController == null)
+        {
+            statusController = gameObject.AddComponent<StatusController>();
+        }
+
+        statusController.Initialize(this);
         currentHealth = Mathf.Clamp(currentHealth, 0f, MaxHealth);
     }
 
@@ -169,7 +177,8 @@ public class Player : MonoBehaviour, ICombatant
             DamageType = DamageType.Physical,
             CanCrit = false,
             CritRate = 0f,
-            CritMultiplier = 1f
+            CritMultiplier = 1f,
+            StatusEffects = null
         });
     }
 
@@ -183,8 +192,23 @@ public class Player : MonoBehaviour, ICombatant
             return result;
         }
 
+        if (statusController != null)
+        {
+            float adjustedDamage = statusController.AbsorbIncomingDamage(result.FinalDamage);
+            result.AbsorbedDamage = result.FinalDamage - adjustedDamage;
+            result.FinalDamage = adjustedDamage;
+            result.WasBlocked = result.WasBlocked || result.FinalDamage <= 0f;
+        }
+
+        if (result.FinalDamage <= 0f)
+        {
+            return result;
+        }
+
         currentHealth = Mathf.Clamp(currentHealth - result.FinalDamage, 0f, MaxHealth);
         OnHealthChange?.Invoke(currentHealth, MaxHealth);
+
+        statusController?.ApplyFromDamageContext(context);
 
         if (currentHealth <= 0f)
         {

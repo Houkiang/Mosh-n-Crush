@@ -20,12 +20,13 @@ public class Enemy : MonoBehaviour, ICombatant
     private bool isDead = false;
     private float maxHealth;
     private StatCollection stats;
+    private StatusController statusController;
 
     public Transform CombatTransform => transform;
     public bool IsAlive => !isDead && gameObject.activeSelf;
     public StatCollection Stats => stats;
-    public float CurrentDamage => currentDamage;
-    public float CurrentMoveSpeed => currentMoveSpeed;
+    public float CurrentDamage => GetAttackPowerForDamageType();
+    public float CurrentMoveSpeed => GetStatValue(StatType.MoveSpeed, currentMoveSpeed);
     public Transform PlayerTransform => playerTransform;
     public int ExperienceReward => experienceReward;
     public bool IsDead => isDead;
@@ -38,6 +39,13 @@ public class Enemy : MonoBehaviour, ICombatant
     {
         movement = GetComponent<EnemyMovement>();
         enemyCollider = GetComponent<Collider>();
+        statusController = GetComponent<StatusController>();
+        if (statusController == null)
+        {
+            statusController = gameObject.AddComponent<StatusController>();
+        }
+
+        statusController.Initialize(this);
     }
 
     private void OnEnable()
@@ -47,6 +55,8 @@ public class Enemy : MonoBehaviour, ICombatant
         {
             enemyCollider.enabled = true;
         }
+
+        statusController?.ClearAllEffects();
     }
 
     public void Initialize(EnemyDataSO data, float gameTime)
@@ -82,7 +92,8 @@ public class Enemy : MonoBehaviour, ICombatant
             CritRate = Mathf.Clamp01(enemyData.critRate + GetStatValue(StatType.CritRate)),
             CritMultiplier = Mathf.Max(1f, enemyData.critMultiplier + GetStatValue(StatType.CritDamage)),
             KnockbackForce = 0f,
-            KnockbackDuration = 0f
+            KnockbackDuration = 0f,
+            StatusEffects = StatusEffectApplication.FromData(enemyData.onHitStatusEffects)
         };
     }
 
@@ -96,7 +107,8 @@ public class Enemy : MonoBehaviour, ICombatant
             DamageType = DamageType.Physical,
             CanCrit = false,
             CritRate = 0f,
-            CritMultiplier = 1f
+            CritMultiplier = 1f,
+            StatusEffects = null
         });
     }
 
@@ -108,11 +120,26 @@ public class Enemy : MonoBehaviour, ICombatant
             return result;
         }
 
+        if (statusController != null)
+        {
+            float adjustedDamage = statusController.AbsorbIncomingDamage(result.FinalDamage);
+            result.AbsorbedDamage = result.FinalDamage - adjustedDamage;
+            result.FinalDamage = adjustedDamage;
+            result.WasBlocked = result.WasBlocked || result.FinalDamage <= 0f;
+        }
+
+        if (result.FinalDamage <= 0f)
+        {
+            return result;
+        }
+
         currentHealth -= result.FinalDamage;
 
         Vector3 popupPos = transform.position + Vector3.up * 2f;
         DamageTextManager.Instance.ShowDamage(popupPos, result.FinalDamage, result.IsCritical);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
+
+        statusController?.ApplyFromDamageContext(context);
 
         if (currentHealth <= 0f)
         {
