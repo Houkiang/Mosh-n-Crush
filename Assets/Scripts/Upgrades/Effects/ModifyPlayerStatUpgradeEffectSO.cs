@@ -1,24 +1,10 @@
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Game/Upgrades/Stat Upgrade")]
-public class StatUpgradeSO : UpgradeDataSO
+[CreateAssetMenu(menuName = "Game/Upgrades/Effects/Modify Player Stat")]
+public class ModifyPlayerStatUpgradeEffectSO : UpgradeEffectSO
 {
-    public enum LegacyStatType
-    {
-        MaxHealth,
-        Strength,
-        Defence,
-        Cooldown,
-        HealingPower,
-        MagicPower,
-        MagicResistance,
-        CritRate,
-        CritDamage
-    }
-
-    [Header("Legacy Stat Settings")]
-    public LegacyStatType statType;
-    public float value;
+    [SerializeField] private StatType statType;
+    [SerializeField] private float value;
 
     public override void Apply(UpgradeContext context)
     {
@@ -30,31 +16,31 @@ public class StatUpgradeSO : UpgradeDataSO
 
         switch (statType)
         {
-            case LegacyStatType.MaxHealth:
+            case StatType.MaxHealth:
                 player.IncreaseMaxHealth(value);
                 break;
-            case LegacyStatType.Strength:
+            case StatType.PhysicalAttack:
                 player.IncreaseStrength(value);
                 break;
-            case LegacyStatType.Defence:
+            case StatType.PhysicalDefense:
                 player.IncreaseDefence(value);
                 break;
-            case LegacyStatType.Cooldown:
+            case StatType.CooldownReduction:
                 player.IncreaseCooldownReduction(value);
                 break;
-            case LegacyStatType.HealingPower:
+            case StatType.HealingPower:
                 player.IncreaseHealingPower(value);
                 break;
-            case LegacyStatType.MagicPower:
+            case StatType.MagicPower:
                 player.IncreaseMagicPower(value);
                 break;
-            case LegacyStatType.MagicResistance:
+            case StatType.MagicResistance:
                 player.IncreaseMagicResistance(value);
                 break;
-            case LegacyStatType.CritRate:
+            case StatType.CritRate:
                 player.IncreaseCritRate(value);
                 break;
-            case LegacyStatType.CritDamage:
+            case StatType.CritDamage:
                 player.IncreaseCritDamage(value);
                 break;
         }

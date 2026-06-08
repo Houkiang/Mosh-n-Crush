@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03726395e2f448948f6f18f72711f75d, type: 3}
   m_Name: SlowEffect
   m_EditorClassIdentifier: 
-  effectName: Status Effect
-  effectType: 0
+  effectName: SlowEffect
+  effectType: 1
   duration: 3
   canStack: 0
   maxStacks: 1
@@ -22,4 +22,7 @@ MonoBehaviour:
   tickDamage: 0
   tickDamageType: 1
   shieldAmount: 0
-  statModifiers: []
+  statModifiers:
+  - statType: 8
+    value: -0.8
+    mode: 1

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class WeaponBase : MonoBehaviour
@@ -18,6 +19,8 @@ public abstract class WeaponBase : MonoBehaviour
     protected int enemyLayerMask;
     protected WeaponManager weaponManager;
     protected Player playerStats;
+
+    private readonly List<StatusEffectApplication> runtimeStatusEffects = new List<StatusEffectApplication>();
 
     public virtual void Initialize(WeaponDataSO data, Transform owner, WeaponManager manager)
     {
@@ -53,7 +56,7 @@ public abstract class WeaponBase : MonoBehaviour
             CritMultiplier = Mathf.Max(1f, weaponData.critMultiplier + critDamageBonus),
             KnockbackForce = currentKnockback,
             KnockbackDuration = currentKnockbackDuration,
-            StatusEffects = StatusEffectApplication.FromData(weaponData.onHitStatusEffects)
+            StatusEffects = BuildStatusEffects()
         };
     }
 
@@ -106,6 +109,46 @@ public abstract class WeaponBase : MonoBehaviour
     {
         currentKnockback *= 1f + amount;
         currentKnockbackDuration *= 1f + amount / 2f;
+    }
+
+    public void AddStatusEffect(StatusEffectDataSO statusEffect, int stackCount = 1)
+    {
+        if (statusEffect == null)
+        {
+            return;
+        }
+
+        runtimeStatusEffects.Add(new StatusEffectApplication
+        {
+            Data = statusEffect,
+            StackCount = Mathf.Max(stackCount, 1)
+        });
+    }
+
+    private StatusEffectApplication[] BuildStatusEffects()
+    {
+        StatusEffectApplication[] dataEffects = StatusEffectApplication.FromData(weaponData.onHitStatusEffects);
+        int dataCount = dataEffects != null ? dataEffects.Length : 0;
+        int runtimeCount = runtimeStatusEffects.Count;
+        if (dataCount == 0 && runtimeCount == 0)
+        {
+            return null;
+        }
+
+        StatusEffectApplication[] results = new StatusEffectApplication[dataCount + runtimeCount];
+        int index = 0;
+
+        for (int i = 0; i < dataCount; i++)
+        {
+            results[index++] = dataEffects[i];
+        }
+
+        for (int i = 0; i < runtimeCount; i++)
+        {
+            results[index++] = runtimeStatusEffects[i];
+        }
+
+        return results;
     }
 
     protected abstract void Attack();

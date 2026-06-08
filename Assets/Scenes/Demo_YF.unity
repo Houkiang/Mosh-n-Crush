@@ -5109,8 +5109,16 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
+      propertyPath: critRateBonus
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: currentHealth
       value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
+      propertyPath: critDamageBonus
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 6272634416148773880, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: startingWeapons.Array.size
@@ -14706,6 +14714,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cfab42d99b97a45959077a5385cd69b5, type: 2}
   - {fileID: 11400000, guid: 89f11de69e2c14aa498c6e0cc0cb8eaa, type: 2}
   - {fileID: 11400000, guid: 516a27de8d7ad411882a53ff3918abc2, type: 2}
+  - {fileID: 11400000, guid: 7776aa6d03ca16647a419fe095506596, type: 2}
 --- !u!4 &1315315537 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 80e93bebfbbd6da409d3e9e3c7049540, type: 3}

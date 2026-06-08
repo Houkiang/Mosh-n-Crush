@@ -25,5 +25,11 @@ MonoBehaviour:
   cooldown: 2.5
   knockbackForce: 60
   knockbackDuration: 0.8
+  damageType: 0
+  canCrit: 1
+  critRate: 0.05
+  critMultiplier: 1
+  onHitStatusEffects:
+  - {fileID: 11400000, guid: d087b14ab7dc9824b9cac81f40d8df26, type: 2}
   attackRange: 8
   attackAngle: 180
