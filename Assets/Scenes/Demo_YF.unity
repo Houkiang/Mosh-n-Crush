@@ -1748,6 +1748,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waves:
+  - {fileID: 11400000, guid: 0cc3f59a2b62b40c689cb3592563fca5, type: 2}
   - {fileID: 11400000, guid: 3f4a1358023014d1e899083747e36b90, type: 2}
   - {fileID: 11400000, guid: 38709d36f4c404e0ca1fbdb097a70dad, type: 2}
   - {fileID: 11400000, guid: 33af7cc5cd68545aba0b13385eee0b52, type: 2}
@@ -5127,7 +5128,7 @@ PrefabInstance:
     - target: {fileID: 6272634416148773880, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: startingWeapons.Array.data[1]
       value: 
-      objectReference: {fileID: 11400000, guid: 3dc89687c9c32481f99e625690fd3d3f, type: 2}
+      objectReference: {fileID: 11400000, guid: aae3c7e27b10a174aa8ce629b09b9a8d, type: 2}
     - target: {fileID: 6450414964554474930, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: m_LocalPosition.x
       value: 193.96997
@@ -10409,7 +10410,7 @@ Transform:
   m_GameObject: {fileID: 971724277}
   serializedVersion: 2
   m_LocalRotation: {x: 0.53730357, y: 0.03562803, z: -0.022797812, w: 0.84232765}
-  m_LocalPosition: {x: 144.47281, y: 64.352135, z: 128.24869}
+  m_LocalPosition: {x: 197.4, y: 25.3, z: 192.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

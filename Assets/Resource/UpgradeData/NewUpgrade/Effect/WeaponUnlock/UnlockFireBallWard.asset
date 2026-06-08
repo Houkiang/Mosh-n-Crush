@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6975cf68179e24f63aaa8e235583a456, type: 3}
-  m_Name: UnlockPenetratingArrow2
+  m_Name: UnlockFireBallWard
   m_EditorClassIdentifier: 
-  upgradeName: "\u7A7F\u900F\u7BAD"
+  upgradeName: "\u706B\u7130\u6756"
   icon: {fileID: 0}
-  description: "\u83B7\u5F97\u7A7F\u900F\u7BAD\u653B\u51FB\uFF0C\u7A7F\u900F\u7BAD\u4F1A\u5BF9\u6240\u6709\u8DEF\u5F84\u4E0A\u7684\u654C\u4EBA\u9020\u6210\u4F24\u5BB3"
+  description: "\u83B7\u5F97\u706B\u7130\u6756\uFF0C\u5B9A\u65F6\u91CA\u653E\u4E00\u4E2A\u8303\u56F4\u706B\u7403\u5E76\u5BF9\u533A\u57DF\u5185\u7684\u654C\u4EBA\u9020\u6210\u707C\u70E7"
   weight: 200
-  weaponDataSO: {fileID: 11400000, guid: 343550874eb084cfdb81e5dfcceaee0b, type: 2}
+  weaponDataSO: {fileID: 11400000, guid: aae3c7e27b10a174aa8ce629b09b9a8d, type: 2}

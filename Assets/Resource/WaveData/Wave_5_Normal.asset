@@ -20,5 +20,3 @@ MonoBehaviour:
   enemies:
   - enemyData: {fileID: 11400000, guid: 8309874480709412e8db46639fe6ba9c, type: 2}
     weight: 50
-  - enemyData: {fileID: 11400000, guid: 39bf4883243f747d6954b2a6e9000017, type: 2}
-    weight: 20

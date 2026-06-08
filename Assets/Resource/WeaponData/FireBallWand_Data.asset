@@ -10,26 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c49c19cf1c76461083100042b43a35f, type: 3}
-  m_Name: Bow_Data
+  m_Name: FireBallWand_Data
   m_EditorClassIdentifier: 
-  weaponName: PenetratingBow
-  weaponPrefab: {fileID: 648116540973858597, guid: a6fc86480acb5425b807f8e1689698fa, type: 3}
+  weaponName: FireBallWard
+  weaponPrefab: {fileID: 5659680407861103465, guid: f45c522da7d5ae148923bf282159a85e, type: 3}
   weaponModelPrefab: {fileID: 0}
   modelOffset: {x: 0, y: 1, z: 0.5}
   swingDuration: 0.2
-  projectilePrefab: {fileID: 5094986509317300970, guid: a276d050c2c9e40d7ab27f29ef484acf, type: 3}
-  projectileSpeed: 25
+  projectilePrefab: {fileID: 5094986509317300970, guid: 9c8279d752c1d124892957688ff3d1a4, type: 3}
+  projectileSpeed: 5
   projectileLifeTime: 5
   weaponCount: 1
-  damage: 8
-  cooldown: 1.5
-  knockbackForce: 60
+  damage: 10
+  cooldown: 3
+  knockbackForce: 100
   knockbackDuration: 0.4
-  damageType: 0
+  damageType: 1
   canCrit: 0
   critRate: 0
   critMultiplier: 1.5
   onHitStatusEffects:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 81ff0c05818bc1149a28cb48c5712fca, type: 2}
   attackRange: 3
   attackAngle: 180
