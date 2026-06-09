@@ -22,7 +22,7 @@ MonoBehaviour:
   projectileLifeTime: 5
   weaponCount: 1
   countBurstInterval: 0.12
-  damage: 7
+  damage: 6
   cooldown: 2.5
   knockbackForce: 60
   knockbackDuration: 0.5

@@ -9,14 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2274731f5eace4b8f89b4c374cea104a, type: 3}
-  m_Name: PenetratingSharp 2
+  m_Script: {fileID: 11500000, guid: 1656a2f08ef114743a20f4d993850e38, type: 3}
+  m_Name: CritDamage 1
   m_EditorClassIdentifier: 
-  upgradeName: "\u7BAD\u5934 II"
+  upgradeName: "\u66B4\u51FB\u4F24\u5BB3 I"
   icon: {fileID: 0}
-  description: "\u7A7F\u900F\u653B\u51FB\u4F24\u5BB3 +7"
+  description: "\u66B4\u51FB\u4F24\u5BB3+8"
   weight: 60
   maxPickCount: 0
-  upgradeType: 0
-  weaponDataSO: {fileID: 11400000, guid: 343550874eb084cfdb81e5dfcceaee0b, type: 2}
-  value: 7
+  statType: 8
+  value: 0.08

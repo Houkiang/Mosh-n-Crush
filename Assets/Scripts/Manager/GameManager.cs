@@ -4,10 +4,14 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    private const float PausedTimeScale = 0f;
+    private const float ActiveTimeScale = 1f;
+
     public static GameManager Instance;
 
     public enum GameState { Menu, Playing, Paused, GameOver }
     public GameState CurrentState { get; private set; }
+    public bool IsPaused => CurrentState == GameState.Paused;
 
     [Header("核心引用")]
     public Transform playerTransform; // 敌人会自动读取这个
@@ -27,10 +31,18 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         Application.targetFrameRate = 60;
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
 
         CurrentState = GameState.Menu;
+        ApplyTimeScale(CurrentState);
     }
 
     void Start()
@@ -62,6 +74,15 @@ public class GameManager : MonoBehaviour
     void OnDisable()
     {
         Enemy.OnEnemyKilled -= HandleScore;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Time.timeScale = ActiveTimeScale;
+            Instance = null;
+        }
     }
 
     private void HandleScore(Enemy enemy)
@@ -128,6 +149,12 @@ public class GameManager : MonoBehaviour
     private void ChangeState(GameState newState)
     {
         CurrentState = newState;
+        ApplyTimeScale(newState);
         OnGameStateChanged?.Invoke(newState);
+    }
+
+    private void ApplyTimeScale(GameState state)
+    {
+        Time.timeScale = state == GameState.Playing ? ActiveTimeScale : PausedTimeScale;
     }
 }

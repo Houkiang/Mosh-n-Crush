@@ -22,12 +22,12 @@ MonoBehaviour:
   projectileLifeTime: 5
   weaponCount: 1
   countBurstInterval: 0.12
-  damage: 8
+  damage: 6
   cooldown: 1.8
   knockbackForce: 60
   knockbackDuration: 0.2
   damageType: 0
-  canCrit: 0
+  canCrit: 1
   critRate: 0
   critMultiplier: 1.5
   onHitStatusEffects:

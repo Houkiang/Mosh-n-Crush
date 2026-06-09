@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4640a07f09af4f1e929c94f75aee2fbc, type: 3}
+  m_Name: CritMax
+  m_EditorClassIdentifier: 
+  upgradeName: "\u72C2\u66B4"
+  icon: {fileID: 0}
+  description: "\u589E\u52A03\u66B4\u51FB\u7387\uFF0C10\u66B4\u51FB\u4F24\u5BB3"
+  weight: 40
+  maxPickCount: 0
+  effects:
+  - {fileID: 11400000, guid: 04f6eb24680585f49b481e8058cd1f27, type: 2}
+  - {fileID: 11400000, guid: 4674b333edfac054386ec9fb06932059, type: 2}

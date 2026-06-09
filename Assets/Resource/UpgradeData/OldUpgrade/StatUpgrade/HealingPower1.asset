@@ -15,6 +15,7 @@ MonoBehaviour:
   upgradeName: "\u6CBB\u6108 I"
   icon: {fileID: 0}
   description: "\u73A9\u5BB6\u6BCF\u79D2\u56DE\u8840 +0.5"
-  weight: 100
+  weight: 50
+  maxPickCount: 0
   statType: 0
   value: 0.5

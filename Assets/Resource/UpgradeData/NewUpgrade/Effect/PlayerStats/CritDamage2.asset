@@ -9,13 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1656a2f08ef114743a20f4d993850e38, type: 3}
-  m_Name: Defence1
+  m_Script: {fileID: 11500000, guid: 2195c492213f4af3ab815c12d8ad5db3, type: 3}
+  m_Name: CritDamage2
   m_EditorClassIdentifier: 
-  upgradeName: "\u9632\u5FA1 I"
-  icon: {fileID: 0}
-  description: "\u73A9\u5BB6\u9632\u5FA1 +1"
-  weight: 50
-  maxPickCount: 0
-  statType: 2
-  value: 1
+  statType: 6
+  value: 0.15

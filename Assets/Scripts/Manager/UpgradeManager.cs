@@ -47,13 +47,31 @@ public class UpgradeManager : MonoBehaviour
 
     private void HandleLevelUp(int level)
     {
+        List<UpgradeDataSO> choices = GetRandomUpgrades(3);
+        if (choices.Count == 0)
+        {
+            if (upgradePanel != null)
+            {
+                upgradePanel.SetActive(false);
+            }
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.ReleasePause(PauseReasonUpgrade);
+            }
+
+            return;
+        }
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.RequestPause(PauseReasonUpgrade);
         }
 
-        upgradePanel.SetActive(true);
-        List<UpgradeDataSO> choices = GetRandomUpgrades(3);
+        if (upgradePanel != null)
+        {
+            upgradePanel.SetActive(true);
+        }
 
         for (int i = 0; i < cards.Length; i++)
         {

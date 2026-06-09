@@ -21,9 +21,15 @@ MonoBehaviour:
   projectileSpeed: 10
   projectileLifeTime: 5
   weaponCount: 1
+  countBurstInterval: 0.12
   damage: 5
   cooldown: 3
   knockbackForce: 45
   knockbackDuration: 0.6
+  damageType: 0
+  canCrit: 1
+  critRate: 0
+  critMultiplier: 1.5
+  onHitStatusEffects: []
   attackRange: 3
   attackAngle: 180

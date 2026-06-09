@@ -14677,6 +14677,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cf0f9d88fb9aa3c4399d0a63374071ba, type: 2}
   - {fileID: 11400000, guid: cc69c134459de044c9335e82193a5234, type: 2}
   - {fileID: 11400000, guid: da266428a05156b47a2c069c60da5df8, type: 2}
+  - {fileID: 11400000, guid: e95d3ed9771f9fa4d844dee30fe8dcbe, type: 2}
+  - {fileID: 11400000, guid: 2f816d11d848d724bae36354d4ef909c, type: 2}
+  - {fileID: 11400000, guid: bf1e9f9bee324954db96834d49fc211b, type: 2}
+  - {fileID: 11400000, guid: 242907610f1fb204ca3579b1cdfef491, type: 2}
+  - {fileID: 11400000, guid: bfac3e0f2515cd046b126e6646496a98, type: 2}
 --- !u!4 &1315315537 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 80e93bebfbbd6da409d3e9e3c7049540, type: 3}

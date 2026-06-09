@@ -15,7 +15,8 @@ MonoBehaviour:
   upgradeName: "\u7BAD\u672F I"
   icon: {fileID: 0}
   description: "\u7A7F\u900F\u653B\u51FB\u51B7\u5374 -0.2s"
-  weight: 80
+  weight: 60
+  maxPickCount: 0
   upgradeType: 1
   weaponDataSO: {fileID: 11400000, guid: 343550874eb084cfdb81e5dfcceaee0b, type: 2}
   value: 0.2
