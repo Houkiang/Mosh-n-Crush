@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 public abstract class WeaponBase : MonoBehaviour
 {
+    private const float DefaultCountBurstInterval = 0.12f;
+
     public WeaponDataSO weaponData;
 
     [Header("Runtime Stats")]
@@ -21,6 +24,7 @@ public abstract class WeaponBase : MonoBehaviour
     protected Player playerStats;
 
     private readonly List<StatusEffectApplication> runtimeStatusEffects = new List<StatusEffectApplication>();
+    private Coroutine attackSequenceCoroutine;
 
     public virtual void Initialize(WeaponDataSO data, Transform owner, WeaponManager manager)
     {
@@ -67,13 +71,17 @@ public abstract class WeaponBase : MonoBehaviour
             return;
         }
 
+        if (attackSequenceCoroutine != null)
+        {
+            return;
+        }
+
         float reduction = playerStats != null ? playerStats.CooldownReduction : 0f;
         float actualCooldown = currentCooldown * (1f - reduction);
         cooldownTimer -= Time.deltaTime;
         if (cooldownTimer <= 0f)
         {
-            Attack();
-            cooldownTimer = actualCooldown;
+            attackSequenceCoroutine = StartCoroutine(PerformAttackSequence(actualCooldown));
         }
     }
 
@@ -103,6 +111,7 @@ public abstract class WeaponBase : MonoBehaviour
 
     public virtual void IncreaseWeaponCount(int amount)
     {
+        currentWeaponCount = Mathf.Max(1, currentWeaponCount + amount);
     }
 
     public void IncreaseKnockback(float amount)
@@ -149,6 +158,56 @@ public abstract class WeaponBase : MonoBehaviour
         }
 
         return results;
+    }
+
+    protected virtual int GetAttackRepeatCount()
+    {
+        return Mathf.Max(1, currentWeaponCount);
+    }
+
+    protected virtual bool UsesCountBurst()
+    {
+        return true;
+    }
+
+    protected virtual float GetCountBurstInterval()
+    {
+        if (weaponData == null)
+        {
+            return DefaultCountBurstInterval;
+        }
+
+        return weaponData.countBurstInterval > 0f
+            ? weaponData.countBurstInterval
+            : DefaultCountBurstInterval;
+    }
+
+    private IEnumerator PerformAttackSequence(float actualCooldown)
+    {
+        int repeatCount = UsesCountBurst() ? GetAttackRepeatCount() : 1;
+        float burstInterval = GetCountBurstInterval();
+
+        for (int i = 0; i < repeatCount; i++)
+        {
+            Attack();
+
+            if (i < repeatCount - 1 && burstInterval > 0f)
+            {
+                yield return new WaitForSeconds(burstInterval);
+            }
+        }
+
+        cooldownTimer = actualCooldown;
+        attackSequenceCoroutine = null;
+    }
+
+    protected virtual void OnDisable()
+    {
+        if (attackSequenceCoroutine != null)
+        {
+            StopCoroutine(attackSequenceCoroutine);
+            attackSequenceCoroutine = null;
+        }
     }
 
     protected abstract void Attack();

@@ -31,6 +31,11 @@ public class ShieldWeapon : WeaponBase
     {
     }
 
+    protected override bool UsesCountBurst()
+    {
+        return false;
+    }
+
     private void SpawnShields()
     {
         foreach (var shield in spawnedShields)
@@ -80,7 +85,8 @@ public class ShieldWeapon : WeaponBase
 
     public override void IncreaseWeaponCount(int amount)
     {
-        currentShieldCount += amount;
+        currentShieldCount = Mathf.Max(1, currentShieldCount + amount);
+        currentWeaponCount = currentShieldCount;
         SpawnShields();
     }
 

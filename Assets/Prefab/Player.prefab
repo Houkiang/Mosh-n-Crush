@@ -75,12 +75,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   levelingData: {fileID: 11400000, guid: 5f2532130c9ff436ea0b02c167c2472a, type: 2}
-  maxHealth: 1000
-  currentHealth: 1000
-  defence: 5
-  strength: 10
-  healingPower: 0.5
+  maxHealth: 200
+  currentHealth: 200
+  defence: 2
+  magicResistance: 0
+  strength: 3
+  magicPower: 0
+  healingPower: 1
   cooldownReduction: 0
+  critRateBonus: 0.05
+  critDamageBonus: 0.4
   isInvincible: 0
   currentLevel: 1
   currentExperience: 0
@@ -99,6 +103,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 9
   rotateSpeed: 15
+  _animator: {fileID: 8654960195627939537}
   jumpForce: 0
   groundLayer:
     serializedVersion: 2
@@ -319,7 +324,7 @@ Transform:
   m_GameObject: {fileID: 3881513821470627539}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -466,7 +471,7 @@ Transform:
   m_GameObject: {fileID: 7595612864088986767}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_ConstrainProportionsScale: 0
   m_Children:

@@ -21,10 +21,11 @@ MonoBehaviour:
   projectileSpeed: 25
   projectileLifeTime: 5
   weaponCount: 1
+  countBurstInterval: 0.12
   damage: 8
-  cooldown: 1.5
+  cooldown: 1.8
   knockbackForce: 60
-  knockbackDuration: 0.4
+  knockbackDuration: 0.2
   damageType: 0
   canCrit: 0
   critRate: 0

@@ -9,12 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6975cf68179e24f63aaa8e235583a456, type: 3}
-  m_Name: UnlockPenetratingArrow2
+  m_Script: {fileID: 11500000, guid: 2274731f5eace4b8f89b4c374cea104a, type: 3}
+  m_Name: ArrowCount
   m_EditorClassIdentifier: 
-  upgradeName: "\u7A7F\u900F\u7BAD"
+  upgradeName: "\u591A\u91CD\u7BAD"
   icon: {fileID: 0}
-  description: "\u83B7\u5F97\u7A7F\u900F\u7BAD\u653B\u51FB\uFF0C\u7A7F\u900F\u7BAD\u4F1A\u5BF9\u6240\u6709\u8DEF\u5F84\u4E0A\u7684\u654C\u4EBA\u9020\u6210\u4F24\u5BB3"
+  description: "\u7BAD\u77E2\u7684\u53D1\u5C04\u6570\u91CF+1"
   weight: 1000
-  maxPickCount: 0
+  maxPickCount: 3
+  upgradeType: 2
   weaponDataSO: {fileID: 11400000, guid: 343550874eb084cfdb81e5dfcceaee0b, type: 2}
+  value: 1

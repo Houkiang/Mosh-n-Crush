@@ -14,18 +14,25 @@ public abstract class ProjectileWeaponBase : WeaponBase
             return;
         }
 
-        Vector3 shootDirection = GetShootDirection();
-        GameObject projectileObject = PoolManager.Instance.GetObject(
-            weaponData.projectilePrefab,
-            GetProjectileSpawnPosition(),
-            Quaternion.LookRotation(shootDirection));
+        Vector3 baseDirection = GetShootDirection();
+        Vector3 spawnPosition = GetProjectileSpawnPosition();
+        int projectileCount = Mathf.Max(1, GetProjectileCountPerAttack());
 
-        if (projectileObject == null)
+        for (int i = 0; i < projectileCount; i++)
         {
-            return;
-        }
+            Vector3 shootDirection = GetProjectileDirection(baseDirection, i, projectileCount);
+            GameObject projectileObject = PoolManager.Instance.GetObject(
+                weaponData.projectilePrefab,
+                spawnPosition,
+                Quaternion.LookRotation(shootDirection));
 
-        InitializeProjectile(projectileObject, CreateDamageContext(), shootDirection);
+            if (projectileObject == null)
+            {
+                continue;
+            }
+
+            InitializeProjectile(projectileObject, CreateDamageContext(), shootDirection);
+        }
     }
 
     protected virtual Vector3 GetShootDirection()
@@ -42,6 +49,16 @@ public abstract class ProjectileWeaponBase : WeaponBase
         return playerTransform != null
             ? playerTransform.position + spawnOffset
             : transform.position;
+    }
+
+    protected virtual int GetProjectileCountPerAttack()
+    {
+        return 1;
+    }
+
+    protected virtual Vector3 GetProjectileDirection(Vector3 baseDirection, int projectileIndex, int projectileCount)
+    {
+        return baseDirection;
     }
 
     protected abstract void InitializeProjectile(GameObject projectileObject, DamageContext context, Vector3 shootDirection);

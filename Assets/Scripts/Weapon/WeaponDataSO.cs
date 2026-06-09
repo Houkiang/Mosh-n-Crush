@@ -19,6 +19,8 @@ public class WeaponDataSO : ScriptableObject
 
     [Header("Orbit Count")]
     public int weaponCount = 1;
+    [Tooltip("Delay between repeated attacks triggered by weapon count. Used by non-orbit weapons.")]
+    [Min(0f)] public float countBurstInterval = 0.12f;
 
     [Header("Combat")]
     public float damage = 10f;
