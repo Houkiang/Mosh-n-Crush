@@ -10,11 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4640a07f09af4f1e929c94f75aee2fbc, type: 3}
-  m_Name: NewUpgrade
+  m_Name: FireWandUpgradeI
   m_EditorClassIdentifier: 
-  upgradeName: "\u706B\u7130\u9644\u52A0 I"
+  upgradeName: "\u5927\u706B\u6756"
   icon: {fileID: 0}
-  description: "\u666E\u901A\u653B\u51FB\u706B\u7130\u9644\u52A0"
-  weight: 476
+  description: "\u706B\u6756\u4F24\u5BB3+2\uFF0C\u706B\u6756\u707C\u70E7\u4F24\u5BB3+1"
+  weight: 1000
+  maxPickCount: 0
   effects:
-  - {fileID: 11400000, guid: cc945d68f9bcbf7438f79b5ad9437bba, type: 2}
+  - {fileID: 11400000, guid: c3ba8c3276dcf0e41837caa9699524a1, type: 2}
+  - {fileID: 11400000, guid: 904ccc8a5c1bf0743bef607e23c40615, type: 2}

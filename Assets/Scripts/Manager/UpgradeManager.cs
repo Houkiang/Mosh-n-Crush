@@ -14,6 +14,8 @@ public class UpgradeManager : MonoBehaviour
     [Header("Upgrade Pool")]
     [SerializeField] private List<UpgradeDataSO> allUpgrades;
 
+    private readonly Dictionary<UpgradeDataSO, int> selectedUpgradeCounts = new Dictionary<UpgradeDataSO, int>();
+
     private void Start()
     {
         if (player == null)
@@ -69,7 +71,19 @@ public class UpgradeManager : MonoBehaviour
 
     public void SelectUpgrade(UpgradeDataSO upgrade)
     {
-        upgrade.Apply(BuildContext());
+        if (upgrade == null)
+        {
+            return;
+        }
+
+        UpgradeContext context = BuildContext();
+        if (!upgrade.CanOffer(context))
+        {
+            return;
+        }
+
+        upgrade.Apply(context);
+        RegisterUpgradePick(upgrade);
 
         upgradePanel.SetActive(false);
         if (GameManager.Instance != null)
@@ -138,6 +152,17 @@ public class UpgradeManager : MonoBehaviour
 
     private UpgradeContext BuildContext()
     {
-        return new UpgradeContext(player, weaponManager);
+        return new UpgradeContext(player, weaponManager, selectedUpgradeCounts);
+    }
+
+    private void RegisterUpgradePick(UpgradeDataSO upgrade)
+    {
+        if (upgrade == null)
+        {
+            return;
+        }
+
+        selectedUpgradeCounts.TryGetValue(upgrade, out int currentCount);
+        selectedUpgradeCounts[upgrade] = currentCount + 1;
     }
 }
