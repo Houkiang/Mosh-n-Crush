@@ -5085,50 +5085,10 @@ PrefabInstance:
       propertyPath: joystick
       value: 
       objectReference: {fileID: 628395692}
-    - target: {fileID: 329469437147363360, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: _animator
-      value: 
-      objectReference: {fileID: 1842229055}
     - target: {fileID: 968886409764038773, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: defence
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: strength
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: maxHealth
-      value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: healingPower
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: critRateBonus
-      value: 0.05
-      objectReference: {fileID: 0}
-    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: currentHealth
-      value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: critDamageBonus
-      value: 0.4
-      objectReference: {fileID: 0}
-    - target: {fileID: 6272634416148773880, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: startingWeapons.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6272634416148773880, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: startingWeapons.Array.data[1]
-      value: 
-      objectReference: {fileID: 11400000, guid: aae3c7e27b10a174aa8ce629b09b9a8d, type: 2}
     - target: {fileID: 6450414964554474930, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: m_LocalPosition.x
       value: 193.96997
@@ -5167,10 +5127,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6450414964554474930, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8952762603048402611, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -18860,11 +18816,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 80e93bebfbbd6da409d3e9e3c7049540, type: 3}
---- !u!95 &1842229055 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 8654960195627939537, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-  m_PrefabInstance: {fileID: 345322462}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1852729321
 GameObject:
   m_ObjectHideFlags: 0
