@@ -15,9 +15,20 @@ MonoBehaviour:
   enemyPrefab: {fileID: 5550575923098641747, guid: 5e63a677ff5825a43935658f6779c1dc, type: 3}
   enemyType: 0
   enemyName: NormalEnemy
-  baseMaxHealth: 10
+  baseMaxHealth: 15
   baseDamage: 4
-  baseMoveSpeed: 3
+  baseMagicPower: 0
+  baseMoveSpeed: 2
   baseDefanse: 2
+  baseMagicResistance: 0
+  movementMode: 0
+  flybySpeedMultiplier: 2
+  flybyDespawnDistance: 12
+  flybyMaxLifeTime: 6
+  attackDamageType: 0
+  canCrit: 0
+  critRate: 0
+  critMultiplier: 1.5
+  onHitStatusEffects: []
   experienceReward: 2
   dropPrefab: {fileID: 8984726673366908729, guid: 6d40108ac4508401c8f6be150546e66a, type: 3}

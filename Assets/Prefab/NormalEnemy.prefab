@@ -153,8 +153,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 2.4, y: 2.4, z: 2.4}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5550575923099007359}
   - {fileID: 5550575923099007345}
@@ -216,6 +216,7 @@ MonoBehaviour:
   currentDamage: 0
   currentMoveSpeed: 0
   currentDefence: 0
+  currentMagicResistance: 0
   experienceReward: 0
 --- !u!114 &2692072085205958925
 MonoBehaviour:
@@ -230,8 +231,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stopDistance: 0.01
-  separationRadius: 1
-  separationWeight: 2
+  separationRadius: 0.6
+  separationWeight: 1.6
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -248,7 +249,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 116b610577ed444ceb1ffb9e0cfee171, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageCooldown: 0.5
+  attackCooldown: 1
+  randomizeInitialCooldown: 1
   useContinuousDamage: 1
 --- !u!54 &3950099893801605678
 Rigidbody:

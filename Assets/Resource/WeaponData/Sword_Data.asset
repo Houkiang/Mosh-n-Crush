@@ -31,5 +31,5 @@ MonoBehaviour:
   critRate: 0.05
   critMultiplier: 1
   onHitStatusEffects: []
-  attackRange: 8
+  attackRange: 6
   attackAngle: 180

@@ -3,12 +3,16 @@ using UnityEngine;
 [RequireComponent(typeof(Enemy))]
 public class EnemyFlybyMovement : MonoBehaviour
 {
-    private const float DirectionBlendSpeed = 10f;
+    private const float SteeringBlendSpeed = 6f;
+    private const float MaxSteeringStrength = 0.8f;
+    private const float SteeringDeadZone = 0.025f;
+    private const float MaxTurnSpeedDegrees = 270f;
 
     private Rigidbody rb;
     private Enemy enemyCore;
     private Vector3 moveDirection;
     private Vector3 currentMoveDirection;
+    private Vector3 smoothedSteering;
     private Vector3 targetPoint;
     private float moveSpeed;
     private float despawnDistance;
@@ -24,6 +28,14 @@ public class EnemyFlybyMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         enemyCore = GetComponent<Enemy>();
+        SetupRigidbody();
+    }
+
+    private void SetupRigidbody()
+    {
+        rb.isKinematic = false;
+        rb.freezeRotation = true;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
     }
 
     private void OnDisable()
@@ -36,6 +48,7 @@ public class EnemyFlybyMovement : MonoBehaviour
         ClearRushGroupController();
         moveDirection = Vector3.zero;
         currentMoveDirection = Vector3.zero;
+        smoothedSteering = Vector3.zero;
         targetPoint = Vector3.zero;
         moveSpeed = 0f;
         despawnDistance = 0f;
@@ -81,6 +94,7 @@ public class EnemyFlybyMovement : MonoBehaviour
 
         targetPoint = lockedTargetPoint;
         currentMoveDirection = moveDirection;
+        smoothedSteering = Vector3.zero;
         moveSpeed = Mathf.Max(0f, speed);
         despawnDistance = Mathf.Max(0f, maxDistance);
         maxLifeTime = Mathf.Max(0.1f, lifeTime);
@@ -153,21 +167,36 @@ public class EnemyFlybyMovement : MonoBehaviour
             }
         }
 
-        Vector3 desiredDirection = moveDirection;
+        Vector3 targetSteering = Vector3.zero;
         if (rushGroupController != null)
         {
             Vector3 steering = rushGroupController.GetSteeringFor(this);
-            desiredDirection += steering;
-            desiredDirection.y = 0f;
+            steering = Vector3.ProjectOnPlane(steering, moveDirection);
+            steering.y = 0f;
+
+            float steeringMagnitude = steering.magnitude;
+            if (steeringMagnitude >= SteeringDeadZone)
+            {
+                targetSteering = steering / steeringMagnitude * Mathf.Min(steeringMagnitude, MaxSteeringStrength);
+            }
         }
 
+        smoothedSteering = Vector3.Lerp(smoothedSteering, targetSteering, Time.fixedDeltaTime * SteeringBlendSpeed);
+        smoothedSteering.y = 0f;
+        if (smoothedSteering.sqrMagnitude < SteeringDeadZone * SteeringDeadZone)
+        {
+            smoothedSteering = Vector3.zero;
+        }
+
+        Vector3 desiredDirection = moveDirection + smoothedSteering;
         if (desiredDirection.sqrMagnitude <= 0.0001f)
         {
             desiredDirection = moveDirection;
         }
 
         desiredDirection.Normalize();
-        currentMoveDirection = Vector3.Slerp(currentMoveDirection, desiredDirection, Time.fixedDeltaTime * DirectionBlendSpeed);
+        float maxTurnRadians = MaxTurnSpeedDegrees * Mathf.Deg2Rad * Time.fixedDeltaTime;
+        currentMoveDirection = Vector3.RotateTowards(currentMoveDirection, desiredDirection, maxTurnRadians, 0f);
         currentMoveDirection.y = 0f;
         if (currentMoveDirection.sqrMagnitude <= 0.0001f)
         {

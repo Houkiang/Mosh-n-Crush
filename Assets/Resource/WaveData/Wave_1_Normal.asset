@@ -13,10 +13,21 @@ MonoBehaviour:
   m_Name: Wave_1_Normal
   m_EditorClassIdentifier: 
   waveType: 0
-  initialSpawnCount: 100
+  initialSpawnCount: 400
   spawnInterval: 0.05
   waveDuration: 45
   bossUnit: {fileID: 0}
   enemies:
   - enemyData: {fileID: 11400000, guid: 8309874480709412e8db46639fe6ba9c, type: 2}
     weight: 27
+  enableRushGroup: 0
+  rushEnemyData: {fileID: 0}
+  rushGroupCount: 6
+  rushSpawnInterval: 8
+  rushStartDelay: 3
+  rushSpawnDistance: 18
+  rushFormationSpacing: 1.5
+  rushCohesionWeight: 1.2
+  rushSeparationWeight: 2.4
+  rushCohesionRadius: 2
+  rushSeparationRadius: 1.25

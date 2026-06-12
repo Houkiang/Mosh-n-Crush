@@ -57,9 +57,11 @@ public class EnemyRushGroupController : MonoBehaviour
         Vector3 selfPosition = member.transform.position;
         selfPosition.y = 0f;
 
-        Vector3 groupCenter = Vector3.zero;
-        int neighborCount = 0;
+        Vector3 localCenter = Vector3.zero;
+        int cohesionNeighborCount = 0;
         Vector3 separation = Vector3.zero;
+        int separationNeighborCount = 0;
+        float cohesionRadiusSqr = cohesionRadius * cohesionRadius;
         float separationRadiusSqr = separationRadius * separationRadius;
 
         for (int i = 0; i < members.Count; i++)
@@ -73,12 +75,20 @@ public class EnemyRushGroupController : MonoBehaviour
             Vector3 otherPosition = other.transform.position;
             otherPosition.y = 0f;
 
-            groupCenter += otherPosition;
-            neighborCount++;
-
             Vector3 offset = selfPosition - otherPosition;
             float sqrDistance = offset.sqrMagnitude;
-            if (sqrDistance <= 0.0001f || sqrDistance > separationRadiusSqr)
+            if (sqrDistance <= 0.0001f)
+            {
+                continue;
+            }
+
+            if (sqrDistance <= cohesionRadiusSqr)
+            {
+                localCenter += otherPosition;
+                cohesionNeighborCount++;
+            }
+
+            if (sqrDistance > separationRadiusSqr)
             {
                 continue;
             }
@@ -86,25 +96,29 @@ public class EnemyRushGroupController : MonoBehaviour
             float distance = Mathf.Sqrt(sqrDistance);
             float strength = 1f - distance / separationRadius;
             separation += offset / distance * strength;
+            separationNeighborCount++;
         }
 
-        if (neighborCount <= 0)
+        Vector3 cohesion = Vector3.zero;
+        if (cohesionNeighborCount > 0)
         {
-            return Vector3.zero;
+            localCenter /= cohesionNeighborCount;
+            cohesion = localCenter - selfPosition;
+            float cohesionDistance = cohesion.magnitude;
+            if (cohesionDistance > 0.001f)
+            {
+                float strength = Mathf.Clamp01(cohesionDistance / cohesionRadius);
+                cohesion = cohesion / cohesionDistance * strength;
+            }
+            else
+            {
+                cohesion = Vector3.zero;
+            }
         }
 
-        groupCenter /= neighborCount;
-
-        Vector3 cohesion = groupCenter - selfPosition;
-        float cohesionDistance = cohesion.magnitude;
-        if (cohesionDistance > 0.001f)
+        if (separationNeighborCount > 0)
         {
-            float strength = Mathf.Clamp01(cohesionDistance / cohesionRadius);
-            cohesion = cohesion / cohesionDistance * strength;
-        }
-        else
-        {
-            cohesion = Vector3.zero;
+            separation /= separationNeighborCount;
         }
 
         return cohesion * cohesionWeight + separation * separationWeight;

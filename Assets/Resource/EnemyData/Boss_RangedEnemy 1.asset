@@ -17,7 +17,18 @@ MonoBehaviour:
   enemyName: Boss_RangedEnemy
   baseMaxHealth: 200
   baseDamage: 9
+  baseMagicPower: 0
   baseMoveSpeed: 3
   baseDefanse: 4
+  baseMagicResistance: 5
+  movementMode: 0
+  flybySpeedMultiplier: 2
+  flybyDespawnDistance: 12
+  flybyMaxLifeTime: 6
+  attackDamageType: 0
+  canCrit: 0
+  critRate: 0
+  critMultiplier: 1.5
+  onHitStatusEffects: []
   experienceReward: 25
   dropPrefab: {fileID: 8984726673366908729, guid: 6d40108ac4508401c8f6be150546e66a, type: 3}

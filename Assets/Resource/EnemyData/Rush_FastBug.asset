@@ -15,20 +15,20 @@ MonoBehaviour:
   enemyPrefab: {fileID: 7211953797202899949, guid: 6da9dc1ec80c1774c899d49219f87f79, type: 3}
   enemyType: 1
   enemyName: Rush_FastBug
-  baseMaxHealth: 15
-  baseDamage: 10
+  baseMaxHealth: 13
+  baseDamage: 8
   baseMagicPower: 0
-  baseMoveSpeed: 5
+  baseMoveSpeed: 4
   baseDefanse: 1
   baseMagicResistance: 0
   movementMode: 1
   flybySpeedMultiplier: 1.8
-  flybyDespawnDistance: 20
-  flybyMaxLifeTime: 10
+  flybyDespawnDistance: 40
+  flybyMaxLifeTime: 20
   attackDamageType: 0
   canCrit: 0
-  critRate: 0
+  critRate: 0.219
   critMultiplier: 1.5
   onHitStatusEffects: []
-  experienceReward: 10
-  dropPrefab: {fileID: 0}
+  experienceReward: 1
+  dropPrefab: {fileID: 8984726673366908729, guid: 6d40108ac4508401c8f6be150546e66a, type: 3}

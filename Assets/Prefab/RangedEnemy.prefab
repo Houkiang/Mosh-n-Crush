@@ -1175,8 +1175,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.4, y: 1.4, z: 1.4}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 5622809594220820363}
   - {fileID: 5622809594220820419}
@@ -1237,6 +1237,7 @@ MonoBehaviour:
   currentDamage: 0
   currentMoveSpeed: 0
   currentDefence: 0
+  currentMagicResistance: 0
   experienceReward: 0
 --- !u!114 &7130003071779344210
 MonoBehaviour:
@@ -1250,10 +1251,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb458f1de611c42e5b07eed0a1ac5cd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackCooldown: 3
+  randomizeInitialCooldown: 1
   projectilePrefab: {fileID: 6509071794310762308, guid: 7b8ce6b9a85ef4dadbc63d83bb68f699, type: 3}
   firePoint: {fileID: 764666553613708677}
   attackRange: 12
-  attackCooldown: 3
   yOffset: 3
 --- !u!114 &3687668700774921506
 MonoBehaviour:
@@ -1267,7 +1269,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 116b610577ed444ceb1ffb9e0cfee171, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageCooldown: 0.35
+  attackCooldown: 1
+  randomizeInitialCooldown: 1
   useContinuousDamage: 1
 --- !u!114 &6585703268840712859
 MonoBehaviour:
