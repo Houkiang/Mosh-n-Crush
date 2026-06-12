@@ -24,13 +24,12 @@ MonoBehaviour:
   countBurstInterval: 0.12
   damage: 6
   cooldown: 1.8
-  knockbackForce: 60
-  knockbackDuration: 0.2
+  knockbackForce: 0
+  knockbackDuration: 0
   damageType: 0
   canCrit: 1
   critRate: 0
   critMultiplier: 1.5
-  onHitStatusEffects:
-  - {fileID: 0}
+  onHitStatusEffects: []
   attackRange: 3
   attackAngle: 180

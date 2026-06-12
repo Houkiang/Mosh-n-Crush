@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public abstract class MeleeArcWeaponBase : WeaponBase
@@ -29,6 +30,8 @@ public abstract class MeleeArcWeaponBase : WeaponBase
             return;
         }
 
+        HashSet<GameObject> processedTargets = new HashSet<GameObject>();
+
         for (int i = 0; i < hits.Length; i++)
         {
             Collider hit = hits[i];
@@ -41,16 +44,27 @@ public abstract class MeleeArcWeaponBase : WeaponBase
                 continue;
             }
 
-            IDamageReceiver damageReceiver = hit.GetComponent(typeof(IDamageReceiver)) as IDamageReceiver;
+            GameObject targetObject = hit.attachedRigidbody != null
+                ? hit.attachedRigidbody.gameObject
+                : hit.gameObject;
+
+            if (!processedTargets.Add(targetObject))
+            {
+                continue;
+            }
+
+            IDamageReceiver damageReceiver = hit.GetComponentInParent(typeof(IDamageReceiver)) as IDamageReceiver;
             if (damageReceiver == null)
             {
                 continue;
             }
 
-            IKnockbackable knockbackable = hit.GetComponent(typeof(IKnockbackable)) as IKnockbackable;
-            DamageContext context = CreateDamageContext(hit.gameObject);
+            IKnockbackable knockbackable = hit.GetComponentInParent(typeof(IKnockbackable)) as IKnockbackable;
+            DamageContext context = CreateDamageContext(targetObject);
             DamageResult result = damageReceiver.ReceiveDamage(context);
-            if (result.FinalDamage > 0f && knockbackable != null)
+            if (result.FinalDamage > 0f
+                && knockbackable != null
+                && (context.KnockbackForce > 0f || context.KnockbackDuration > 0f))
             {
                 knockbackable.TakeKnockback(playerTransform.position, context.KnockbackForce, context.KnockbackDuration);
             }

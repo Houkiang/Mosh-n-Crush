@@ -24,5 +24,5 @@ MonoBehaviour:
   shieldAmount: 0
   statModifiers:
   - statType: 8
-    value: -0.8
+    value: -0.5
     mode: 1

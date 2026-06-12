@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Demo_YF.unity
+    guid: 3aa473ac9e91f57439ab7f1b7bdf0619
   m_configObjects: {}
