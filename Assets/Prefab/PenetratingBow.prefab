@@ -52,6 +52,6 @@ MonoBehaviour:
   currentKnockbackDuration: 0
   currentWeaponCount: 0
   weaponCount: 1
-  spawnOffset: {x: 0, y: 1, z: 0}
+  spawnOffset: {x: 0, y: 0.5, z: 0}
   aimWithVerticalOffset: 1
   spreadAngle: 30

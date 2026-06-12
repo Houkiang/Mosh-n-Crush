@@ -16,6 +16,7 @@ public class Enemy : MonoBehaviour, ICombatant
 
     private EnemyMovement movement;
     private EnemyFlybyMovement flybyMovement;
+    private EnemyHitFlash hitFlash;
     private Transform playerTransform;
     private Collider enemyCollider;
     private bool isDead = false;
@@ -42,6 +43,12 @@ public class Enemy : MonoBehaviour, ICombatant
     {
         movement = GetComponent<EnemyMovement>();
         flybyMovement = GetComponent<EnemyFlybyMovement>();
+        hitFlash = GetComponent<EnemyHitFlash>();
+        if (hitFlash == null)
+        {
+            hitFlash = gameObject.AddComponent<EnemyHitFlash>();
+        }
+
         enemyCollider = GetComponent<Collider>();
         statusController = GetComponent<StatusController>();
         if (statusController == null)
@@ -141,6 +148,7 @@ public class Enemy : MonoBehaviour, ICombatant
 
         Vector3 popupPos = transform.position + Vector3.up * 2f;
         DamageTextManager.Instance.ShowDamage(popupPos, result.FinalDamage, result.IsCritical);
+        hitFlash?.PlayFlash();
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
         statusController?.ApplyFromDamageContext(context);
