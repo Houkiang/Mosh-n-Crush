@@ -25,7 +25,7 @@ MonoBehaviour:
   damage: 6
   cooldown: 2.5
   knockbackForce: 60
-  knockbackDuration: 0.6
+  knockbackDuration: 0.3
   damageType: 0
   canCrit: 1
   critRate: 0.05

@@ -24,8 +24,8 @@ MonoBehaviour:
   countBurstInterval: 0.12
   damage: 6
   cooldown: 1.8
-  knockbackForce: 0
-  knockbackDuration: 0
+  knockbackForce: 40
+  knockbackDuration: 0.2
   damageType: 0
   canCrit: 1
   critRate: 0

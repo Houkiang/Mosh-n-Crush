@@ -100,6 +100,12 @@ public class EnemyMovement : MonoBehaviour
                 continue;
             }
 
+            EnemyMovement otherMovement = col.GetComponentInParent<EnemyMovement>();
+            if (otherMovement == null || !otherMovement.enabled || otherMovement == this)
+            {
+                continue;
+            }
+
             Vector3 pushDir = transform.position - col.transform.position;
             pushDir.y = 0f;
 
@@ -196,3 +202,4 @@ public class EnemyMovement : MonoBehaviour
         }
     }
 }
+

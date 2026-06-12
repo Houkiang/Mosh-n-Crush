@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb5f1bd877bd94e458721ca8ae2bfffa, type: 3}
+  m_Name: Rush_FastBug
+  m_EditorClassIdentifier: 
+  enemyPrefab: {fileID: 7211953797202899949, guid: 6da9dc1ec80c1774c899d49219f87f79, type: 3}
+  enemyType: 1
+  enemyName: Rush_FastBug
+  baseMaxHealth: 15
+  baseDamage: 10
+  baseMagicPower: 0
+  baseMoveSpeed: 5
+  baseDefanse: 1
+  baseMagicResistance: 0
+  movementMode: 1
+  flybySpeedMultiplier: 1.8
+  flybyDespawnDistance: 20
+  flybyMaxLifeTime: 10
+  attackDamageType: 0
+  canCrit: 0
+  critRate: 0
+  critMultiplier: 1.5
+  onHitStatusEffects: []
+  experienceReward: 10
+  dropPrefab: {fileID: 0}

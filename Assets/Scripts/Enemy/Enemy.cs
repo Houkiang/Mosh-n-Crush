@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour, ICombatant
 {
-    [Header("Core Data")]
+    [Header("核心数据")]
     [SerializeField] private EnemyDataSO enemyData;
 
-    [Header("Runtime Stats")]
+    [Header("运行时属性")]
     [SerializeField] private float currentHealth;
     [SerializeField] private float currentDamage;
     [SerializeField] private float currentMoveSpeed;
@@ -15,9 +15,11 @@ public class Enemy : MonoBehaviour, ICombatant
     [SerializeField] private int experienceReward;
 
     private EnemyMovement movement;
+    private EnemyFlybyMovement flybyMovement;
     private Transform playerTransform;
     private Collider enemyCollider;
     private bool isDead = false;
+    private bool hasBeenRemoved = false;
     private float maxHealth;
     private StatCollection stats;
     private StatusController statusController;
@@ -33,11 +35,13 @@ public class Enemy : MonoBehaviour, ICombatant
     public EnemyDataSO EnemyData => enemyData;
 
     public static event Action<Enemy> OnEnemyKilled;
+    public static event Action<Enemy> OnEnemyRemoved;
     public event Action<float, float> OnHealthChanged;
 
     private void Awake()
     {
         movement = GetComponent<EnemyMovement>();
+        flybyMovement = GetComponent<EnemyFlybyMovement>();
         enemyCollider = GetComponent<Collider>();
         statusController = GetComponent<StatusController>();
         if (statusController == null)
@@ -51,12 +55,16 @@ public class Enemy : MonoBehaviour, ICombatant
     private void OnEnable()
     {
         isDead = false;
+        hasBeenRemoved = false;
+
         if (enemyCollider != null)
         {
             enemyCollider.enabled = true;
         }
 
         statusController?.ClearAllEffects();
+        movement?.ResetState();
+        flybyMovement?.ResetState();
     }
 
     public void Initialize(EnemyDataSO data, float gameTime)
@@ -73,11 +81,7 @@ public class Enemy : MonoBehaviour, ICombatant
 
         currentHealth = maxHealth;
         experienceReward = Mathf.RoundToInt(data.experienceReward * timeMultiplier);
-
-        if (movement != null)
-        {
-            movement.ResetState();
-        }
+        ApplyMovementMode();
     }
 
     public DamageContext CreateDamageContext(GameObject target = null)
@@ -152,16 +156,31 @@ public class Enemy : MonoBehaviour, ICombatant
 
     public void TakeKnockback(Vector3 sourcePosition, float force, float stunDuration)
     {
-        if (isDead || movement == null)
+        if (isDead)
         {
             return;
         }
 
-        movement.ApplyKnockback(sourcePosition, force, stunDuration);
+        if (movement != null && movement.enabled)
+        {
+            movement.ApplyKnockback(sourcePosition, force, stunDuration);
+            return;
+        }
+
+        if (flybyMovement != null && flybyMovement.enabled)
+        {
+            flybyMovement.ApplyKnockback(sourcePosition, force, stunDuration);
+        }
     }
 
     public void Despawn()
     {
+        if (!hasBeenRemoved)
+        {
+            hasBeenRemoved = true;
+            OnEnemyRemoved?.Invoke(this);
+        }
+
         if (PoolManager.Instance != null)
         {
             PoolManager.Instance.ReturnObject(gameObject);
@@ -170,6 +189,32 @@ public class Enemy : MonoBehaviour, ICombatant
         {
             Destroy(gameObject);
         }
+    }
+
+    public void ConfigureFlyby(Vector3 direction, Vector3 lockedTargetPoint)
+    {
+        if (enemyData == null || flybyMovement == null)
+        {
+            return;
+        }
+
+        float speed = Mathf.Max(0f, CurrentMoveSpeed * enemyData.flybySpeedMultiplier);
+        flybyMovement.Configure(
+            direction,
+            lockedTargetPoint,
+            speed,
+            enemyData.flybyDespawnDistance,
+            enemyData.flybyMaxLifeTime);
+    }
+
+    public void AssignRushGroupController(EnemyRushGroupController controller)
+    {
+        if (flybyMovement == null)
+        {
+            return;
+        }
+
+        flybyMovement.SetRushGroupController(controller);
     }
 
     private void Die()
@@ -232,5 +277,20 @@ public class Enemy : MonoBehaviour, ICombatant
     private float GetStatValue(StatType statType, float fallback = 0f)
     {
         return stats != null ? stats.GetValue(statType, fallback) : fallback;
+    }
+
+    private void ApplyMovementMode()
+    {
+        if (movement != null)
+        {
+            movement.enabled = enemyData == null || enemyData.movementMode == EnemyMovementMode.Chase;
+            movement.ResetState();
+        }
+
+        if (flybyMovement != null)
+        {
+            flybyMovement.enabled = enemyData != null && enemyData.movementMode == EnemyMovementMode.FlybyRush;
+            flybyMovement.ResetState();
+        }
     }
 }
