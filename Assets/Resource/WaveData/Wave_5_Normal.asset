@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waveType: 0
   initialSpawnCount: 10
-  spawnInterval: 0.6
+  spawnInterval: 0.8
   waveDuration: 100
   bossUnit: {fileID: 0}
   enemies:
@@ -30,4 +30,4 @@ MonoBehaviour:
   rushCohesionWeight: 1.2
   rushSeparationWeight: 1.3
   rushCohesionRadius: 2
-  rushSeparationRadius: 5
+  rushSeparationRadius: 3

@@ -1748,11 +1748,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waves:
-  - {fileID: 11400000, guid: 0cc3f59a2b62b40c689cb3592563fca5, type: 2}
   - {fileID: 11400000, guid: 3f4a1358023014d1e899083747e36b90, type: 2}
+  - {fileID: 11400000, guid: 0cc3f59a2b62b40c689cb3592563fca5, type: 2}
   - {fileID: 11400000, guid: 38709d36f4c404e0ca1fbdb097a70dad, type: 2}
   - {fileID: 11400000, guid: 33af7cc5cd68545aba0b13385eee0b52, type: 2}
-  - {fileID: 11400000, guid: 469522c9694934c368d89fa2791812be, type: 2}
   maxEnemies: 1000
   minSpawnRadius: 20
   maxSpawnRadius: 30
@@ -5089,10 +5088,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 6272634416148773880, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
-      propertyPath: startingWeapons.Array.data[0]
-      value: 
-      objectReference: {fileID: 11400000, guid: bb70d80aa544745789c6320b104a3497, type: 2}
     - target: {fileID: 6450414964554474930, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: m_LocalPosition.x
       value: 193.96997
@@ -5720,7 +5715,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &405506409
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11655,14 +11650,14 @@ RectTransform:
   m_GameObject: {fileID: 1116227593}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 405506409}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 263}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1116227595
@@ -11685,7 +11680,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: GAME OVER!!!!!
+  m_text: GAME OVER!
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -15504,16 +15499,16 @@ RectTransform:
   m_GameObject: {fileID: 1437882210}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 3}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1680305756}
   m_Father: {fileID: 405506409}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -95.87}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: 0, y: 44.6}
+  m_SizeDelta: {x: 128.9, y: 50.4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1437882212
 MonoBehaviour:

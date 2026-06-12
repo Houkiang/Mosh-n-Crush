@@ -10,25 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eb5f1bd877bd94e458721ca8ae2bfffa, type: 3}
-  m_Name: RangedEnemy
+  m_Name: FastBug
   m_EditorClassIdentifier: 
-  enemyPrefab: {fileID: 5622809594221243363, guid: 7ebe4477a84d79e4ebd402d1e27e5ebc, type: 3}
-  enemyType: 0
-  enemyName: RangedEnemy
-  baseMaxHealth: 30
-  baseDamage: 4
-  baseMagicPower: 2
-  baseMoveSpeed: 1.5
-  baseDefanse: 3
-  baseMagicResistance: 3
+  enemyPrefab: {fileID: 7211953797202899949, guid: 6da9dc1ec80c1774c899d49219f87f79, type: 3}
+  enemyType: 1
+  enemyName: Rush_FastBug
+  baseMaxHealth: 13
+  baseDamage: 8
+  baseMagicPower: 0
+  baseMoveSpeed: 4
+  baseDefanse: 1
+  baseMagicResistance: 0
   movementMode: 0
-  flybySpeedMultiplier: 2
-  flybyDespawnDistance: 12
-  flybyMaxLifeTime: 6
+  flybySpeedMultiplier: 1.8
+  flybyDespawnDistance: 40
+  flybyMaxLifeTime: 20
   attackDamageType: 0
   canCrit: 0
-  critRate: 0
+  critRate: 0.219
   critMultiplier: 1.5
   onHitStatusEffects: []
-  experienceReward: 4
+  experienceReward: 1
   dropPrefab: {fileID: 8984726673366908729, guid: 6d40108ac4508401c8f6be150546e66a, type: 3}

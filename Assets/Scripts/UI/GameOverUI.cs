@@ -1,28 +1,26 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; 
+using UnityEngine.SceneManagement;
 
 public class GameOverUI : MonoBehaviour
 {
     [Header("UI 组件")]
     [SerializeField] private GameObject gameOverPanel;
 
-    void Awake()
+    private CanvasGroup canvasGroup;
+
+    private void Awake()
     {
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(false);
-        }
+        canvasGroup = EnsureCanvasGroup();
+        SetPanelVisible(false);
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
-        // 订阅玩家死亡事件
         Player.OnPlayerDied += HandlePlayerDeath;
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
-        // 取消订阅，防止内存泄漏
         Player.OnPlayerDied -= HandlePlayerDeath;
     }
 
@@ -33,17 +31,46 @@ public class GameOverUI : MonoBehaviour
             GameManager.Instance.GameOver();
         }
 
-        if (gameOverPanel != null)
+        SetPanelVisible(true);
+    }
+
+    public void OnRestartButtonClicked()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private CanvasGroup EnsureCanvasGroup()
+    {
+        GameObject target = gameOverPanel != null ? gameOverPanel : gameObject;
+        CanvasGroup group = target.GetComponent<CanvasGroup>();
+        if (group == null)
+        {
+            group = target.AddComponent<CanvasGroup>();
+        }
+
+        return group;
+    }
+
+    private void SetPanelVisible(bool visible)
+    {
+        if (gameOverPanel != null && !gameOverPanel.activeSelf)
         {
             gameOverPanel.SetActive(true);
         }
-    }
 
-    // 绑定到按钮的 OnClick 事件上
-    public void OnRestartButtonClicked()
-    {
-        // 重载当前场景
-        // 获取当前活动场景的名字并重新加载
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (canvasGroup == null)
+        {
+            canvasGroup = EnsureCanvasGroup();
+        }
+
+        if (canvasGroup == null)
+        {
+            return;
+        }
+
+        canvasGroup.alpha = visible ? 1f : 0f;
+        canvasGroup.interactable = visible;
+        canvasGroup.blocksRaycasts = visible;
     }
 }

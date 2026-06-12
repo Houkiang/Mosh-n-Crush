@@ -343,7 +343,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startingWeapons:
-  - {fileID: 11400000, guid: 343550874eb084cfdb81e5dfcceaee0b, type: 2}
+  - {fileID: 11400000, guid: bb70d80aa544745789c6320b104a3497, type: 2}
   weaponHolder: {fileID: 8305579279455465948}
   scanRadius: 50
   enemyLayer:
