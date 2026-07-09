@@ -57,12 +57,12 @@ public class EnemyProjectile : MonoBehaviour
         }
         else if ((whatIsGround.value & (1 << other.gameObject.layer)) > 0)
         {
-            Debug.Log("敌人子弹击中地面");
+            //Debug.Log("敌人子弹击中地面");
             Despawn();
         }
         else if ((whatIsShield.value & (1 << other.gameObject.layer)) > 0)
         {
-            Debug.Log("敌人子弹被盾牌挡下");
+           // Debug.Log("敌人子弹被盾牌挡下");
             Despawn();
         }
     }

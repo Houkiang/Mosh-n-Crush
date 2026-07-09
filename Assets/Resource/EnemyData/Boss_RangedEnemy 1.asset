@@ -16,7 +16,7 @@ MonoBehaviour:
   enemyType: 5
   enemyName: Boss_RangedEnemy
   baseMaxHealth: 200
-  baseDamage: 6
+  baseDamage: 8
   baseMagicPower: 4
   baseMoveSpeed: 3
   baseDefanse: 4

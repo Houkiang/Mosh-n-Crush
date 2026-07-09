@@ -15,7 +15,7 @@ MonoBehaviour:
   waveType: 0
   initialSpawnCount: 10
   spawnInterval: 0.8
-  waveDuration: 100
+  waveDuration: 60
   bossUnit: {fileID: 0}
   enemies:
   - enemyData: {fileID: 11400000, guid: 8309874480709412e8db46639fe6ba9c, type: 2}

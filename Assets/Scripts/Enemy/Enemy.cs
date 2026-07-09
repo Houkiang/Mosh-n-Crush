@@ -233,7 +233,9 @@ public class Enemy : MonoBehaviour, ICombatant
         }
 
         isDead = true;
+        #if UNITY_EDITOR
         Debug.Log($"{enemyData.enemyName} died");
+        #endif
         if (enemyCollider != null)
         {
             enemyCollider.enabled = false;

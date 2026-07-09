@@ -16,7 +16,7 @@ MonoBehaviour:
   enemyType: 1
   enemyName: Rush_FastBug
   baseMaxHealth: 13
-  baseDamage: 8
+  baseDamage: 5
   baseMagicPower: 0
   baseMoveSpeed: 4
   baseDefanse: 1

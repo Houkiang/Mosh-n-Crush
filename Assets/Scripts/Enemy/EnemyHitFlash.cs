@@ -5,6 +5,8 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(Enemy))]
 public class EnemyHitFlash : MonoBehaviour
 {
+    private const string OverlayMaterialResourcePath = "Materials/EnemyHitFlashOverlay";
+
     [Header("受击闪白")]
     [SerializeField] private Color flashColor = Color.white;
     [SerializeField] private float flashDuration = 0.1f;
@@ -77,16 +79,16 @@ public class EnemyHitFlash : MonoBehaviour
             return;
         }
 
-        Shader shader = Shader.Find("Custom/EnemyHitFlashOverlay");
-        if (shader == null)
+        Material templateMaterial = Resources.Load<Material>(OverlayMaterialResourcePath);
+        if (templateMaterial == null)
         {
-            Debug.LogWarning("EnemyHitFlashOverlay shader not found.");
+            Debug.LogWarning($"EnemyHitFlash overlay material not found at Resources/{OverlayMaterialResourcePath}.");
             return;
         }
 
-        sharedOverlayMaterial = new Material(shader)
+        sharedOverlayMaterial = new Material(templateMaterial)
         {
-            name = "EnemyHitFlashOverlay_Runtime"
+            name = templateMaterial.name + "_Runtime"
         };
     }
 

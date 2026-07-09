@@ -324,20 +324,25 @@ public class FireballProjectile : MonoBehaviour
 
     private Vector3 GetGroundImpactPoint(Collider groundCollider)
     {
-        if (groundCollider != null)
-        {
-            Vector3 closestPoint = groundCollider.ClosestPoint(transform.position);
-            if ((closestPoint - transform.position).sqrMagnitude > 0.0001f)
-            {
-                return closestPoint;
-            }
-        }
 
         float castDistance = Mathf.Max(GetExplosionRadius() * 2f, 5f);
         Vector3 rayOrigin = transform.position + Vector3.up * castDistance * 0.5f;
         if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, castDistance, whatIsGround))
         {
             return hit.point;
+        }
+        else if (groundCollider != null&& 
+                (                 
+                groundCollider is BoxCollider ||
+                groundCollider is SphereCollider ||
+                groundCollider is CapsuleCollider ||
+                (groundCollider is MeshCollider meshCollider && meshCollider.convex)))
+        {
+            Vector3 closestPoint = groundCollider.ClosestPoint(transform.position);
+            if ((closestPoint - transform.position).sqrMagnitude > 0.0001f)
+            {
+                return closestPoint;
+            }
         }
 
         return transform.position;
