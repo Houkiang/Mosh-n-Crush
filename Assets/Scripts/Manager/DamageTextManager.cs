@@ -6,6 +6,7 @@ public class DamageTextManager : MonoBehaviour
 
     [Header("资源引用")]
     [SerializeField] private GameObject damagePopupPrefab;
+    [SerializeField] private int poolSize = 60; // 池的大小
 
     private Transform mainCameraTransform;
 
@@ -24,6 +25,13 @@ public class DamageTextManager : MonoBehaviour
             var cam = FindFirstObjectByType<Camera>();
             if (cam != null) mainCameraTransform = cam.transform;
             else Debug.LogError("严重错误：场景中找不到任何摄像机！伤害数字将无法朝向屏幕。");
+        }
+    }
+    private void Start()
+    {
+        if(damagePopupPrefab!=null&&PoolManager.Instance!=null)
+        {
+            PoolManager.Instance.PreparePool(damagePopupPrefab, poolSize);
         }
     }
 

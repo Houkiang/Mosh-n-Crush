@@ -6,7 +6,7 @@ public class PoolManager : MonoBehaviour
     public static PoolManager Instance { get; private set; }
 
     // 字典：Key是预制体(Prefab)，Value是该预制体的对象池队列
-    private Dictionary<GameObject, Queue<GameObject>> poolDictionary = new Dictionary<GameObject, Queue<GameObject>>();
+    [SerializeField] private Dictionary<GameObject, Queue<GameObject>> poolDictionary = new Dictionary<GameObject, Queue<GameObject>>();
     
     // 字典：Key是实例化的物体(Instance)，Value是它原本所属的预制体(Prefab)
     // 用于在回收时知道这个物体该回到哪个队列里

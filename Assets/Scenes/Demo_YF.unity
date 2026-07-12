@@ -1704,10 +1704,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waves:
+  - {fileID: 11400000, guid: 3f4a1358023014d1e899083747e36b90, type: 2}
   - {fileID: 11400000, guid: 0cc3f59a2b62b40c689cb3592563fca5, type: 2}
   - {fileID: 11400000, guid: 38709d36f4c404e0ca1fbdb097a70dad, type: 2}
   - {fileID: 11400000, guid: 33af7cc5cd68545aba0b13385eee0b52, type: 2}
-  - {fileID: 11400000, guid: 3f4a1358023014d1e899083747e36b90, type: 2}
   maxEnemies: 1000
   minSpawnRadius: 20
   maxSpawnRadius: 30
@@ -5055,7 +5055,7 @@ PrefabInstance:
     - target: {fileID: 6272634416148773880, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: startingWeapons.Array.data[0]
       value: 
-      objectReference: {fileID: 11400000, guid: bb70d80aa544745789c6320b104a3497, type: 2}
+      objectReference: {fileID: 11400000, guid: 3dc89687c9c32481f99e625690fd3d3f, type: 2}
     - target: {fileID: 6450414964554474930, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: m_LocalPosition.x
       value: 193.86996
@@ -17223,6 +17223,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damagePopupPrefab: {fileID: 2897339406545701604, guid: d0efef3e3e03643f8ade38ea2875bb52, type: 3}
+  poolSize: 60
 --- !u!4 &1635999572 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400004, guid: da0934589fb63c74e8a088498ff1b170, type: 3}

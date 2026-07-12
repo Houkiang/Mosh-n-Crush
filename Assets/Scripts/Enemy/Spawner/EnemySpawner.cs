@@ -497,6 +497,7 @@ public class EnemySpawner : MonoBehaviour
     private void PrewarmAllEnemies()
     {
         HashSet<EnemyDataSO> allTypes = new HashSet<EnemyDataSO>();
+        Dictionary<EnemyDataSO, int> enemyTypeCounts = new Dictionary<EnemyDataSO, int>();
         for (int i = 0; i < waves.Count; i++)
         {
             WaveConfigSO wave = waves[i];
@@ -510,12 +511,17 @@ public class EnemySpawner : MonoBehaviour
                 if (wave.enemies[j].enemyData != null)
                 {
                     allTypes.Add(wave.enemies[j].enemyData);
+                    enemyTypeCounts[wave.enemies[j].enemyData] = 
+                        enemyTypeCounts.GetValueOrDefault(wave.enemies[j].enemyData, 0) 
+                                + wave.initialSpawnCount*wave.enemies[j].weight
+                                    + Mathf.CeilToInt(wave.waveDuration / wave.spawnInterval) * wave.enemies[j].weight;
                 }
             }
 
             if (wave.rushEnemyData != null)
             {
                 allTypes.Add(wave.rushEnemyData);
+                enemyTypeCounts[wave.rushEnemyData] = enemyTypeCounts.GetValueOrDefault(wave.rushEnemyData, 0) + wave.rushGroupCount;
             }
         }
 
@@ -523,7 +529,7 @@ public class EnemySpawner : MonoBehaviour
         {
             if (data != null && data.enemyPrefab != null)
             {
-                PoolManager.Instance.PreparePool(data.enemyPrefab, 10);
+                PoolManager.Instance.PreparePool(data.enemyPrefab, enemyTypeCounts.GetValueOrDefault(data, 0) + 1);
             }
         }
     }

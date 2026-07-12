@@ -12,7 +12,7 @@ public class GameHUD : MonoBehaviour
     [SerializeField] private TextMeshProUGUI frameRateText; // 显示3帧的平均帧率
     [Header("平均帧数设置")]
     [Tooltip("每多少帧计算一次平均帧率")]
-    public int frameCountForAverage = 5;
+    public int frameCountForAverage = 10;
     // 私有变量
     private float timeAccumulator;     // 累计时间（秒）
     private int frameAccumulator;      // 累计帧数
@@ -56,7 +56,9 @@ public class GameHUD : MonoBehaviour
 
             // 更新 UI 文本，保留两位小数
             if (frameRateText != null)
-                frameRateText.text = $"AVGFPS: {averageFPS:F2}";
+                frameRateText.SetText($"FPS: {averageFPS:F2}");
+
+
 
             // 重置累计器，开始下一轮统计
             ResetAccumulator();
