@@ -718,7 +718,7 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: aa95c8b3dddc5ae42a1e3846f1cee625, type: 3}
   m_Controller: {fileID: 9100000, guid: 0f1a975b292927e41b18d8f94a1078c4, type: 2}
-  m_CullingMode: 1
+  m_CullingMode: 2
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
@@ -829,6 +829,10 @@ MonoBehaviour:
   attackCooldown: 1
   randomizeInitialCooldown: 1
   useContinuousDamage: 1
+  attackDistance: 1
+  disCheckCoolDown: 2.5
+  disCheckTimer: 0
+  disCheckFrequencyThreshold: 20
 --- !u!114 &2269599914639809777
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -841,7 +845,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b880a16b694a1468187fe47efcf23031, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stopDistance: 0.01
+  stopDistance: 0.8
   separationRadius: 1.5
   separationWeight: 20
   enemyLayer:

@@ -1193,7 +1193,7 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: eeb0526768ba8934da3ad6f912dff4f7, type: 3}
   m_Controller: {fileID: 9100000, guid: 63164950266cc40468e0deed67e3cf26, type: 2}
-  m_CullingMode: 1
+  m_CullingMode: 2
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
@@ -1272,6 +1272,10 @@ MonoBehaviour:
   attackCooldown: 1
   randomizeInitialCooldown: 1
   useContinuousDamage: 1
+  attackDistance: 1.5
+  disCheckCoolDown: 2.5
+  disCheckTimer: 0
+  disCheckFrequencyThreshold: 12
 --- !u!114 &6585703268840712859
 MonoBehaviour:
   m_ObjectHideFlags: 0

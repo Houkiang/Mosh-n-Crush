@@ -1704,10 +1704,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waves:
-  - {fileID: 11400000, guid: 3f4a1358023014d1e899083747e36b90, type: 2}
   - {fileID: 11400000, guid: 0cc3f59a2b62b40c689cb3592563fca5, type: 2}
   - {fileID: 11400000, guid: 38709d36f4c404e0ca1fbdb097a70dad, type: 2}
   - {fileID: 11400000, guid: 33af7cc5cd68545aba0b13385eee0b52, type: 2}
+  - {fileID: 11400000, guid: 3f4a1358023014d1e899083747e36b90, type: 2}
   maxEnemies: 1000
   minSpawnRadius: 20
   maxSpawnRadius: 30
@@ -5043,6 +5043,10 @@ PrefabInstance:
     - target: {fileID: 968886409764038773, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 1487423614264099524, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
+      propertyPath: m_Radius
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3417993420321674895, guid: 6eea9b0bda1f841d9a6c040bcc86d359, type: 3}
       propertyPath: maxHealth

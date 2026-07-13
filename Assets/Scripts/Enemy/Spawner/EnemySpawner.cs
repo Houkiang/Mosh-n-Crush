@@ -510,18 +510,21 @@ public class EnemySpawner : MonoBehaviour
             {
                 if (wave.enemies[j].enemyData != null)
                 {
+
+
+
+
                     allTypes.Add(wave.enemies[j].enemyData);
                     enemyTypeCounts[wave.enemies[j].enemyData] = 
-                        enemyTypeCounts.GetValueOrDefault(wave.enemies[j].enemyData, 0) 
-                                + wave.initialSpawnCount*wave.enemies[j].weight
-                                    + Mathf.CeilToInt(wave.waveDuration / wave.spawnInterval) * wave.enemies[j].weight;
+                        Math.Max(enemyTypeCounts.GetValueOrDefault(wave.enemies[j].enemyData, 0) 
+                                , wave.initialSpawnCount*wave.enemies[j].weight/30);
                 }
             }
 
             if (wave.rushEnemyData != null)
             {
                 allTypes.Add(wave.rushEnemyData);
-                enemyTypeCounts[wave.rushEnemyData] = enemyTypeCounts.GetValueOrDefault(wave.rushEnemyData, 0) + wave.rushGroupCount;
+                enemyTypeCounts[wave.rushEnemyData] = Math.Max(enemyTypeCounts.GetValueOrDefault(wave.rushEnemyData, 0), wave.rushGroupCount);
             }
         }
 

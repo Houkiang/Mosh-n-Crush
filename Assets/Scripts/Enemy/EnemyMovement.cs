@@ -7,6 +7,7 @@ public class EnemyMovement : MonoBehaviour
     [Header("移动")]
     [Tooltip("敌人与玩家距离小于该值时停止主动前进。")]
     [SerializeField] private float stopDistance = 0.01f;
+    private float sqtrStopDistance;
 
     [Header("分离")]
     [Tooltip("用于检测附近敌人的分离半径。")]
@@ -24,6 +25,7 @@ public class EnemyMovement : MonoBehaviour
     private float knockbackTimer;
     private Vector3 currentSeparationForce = Vector3.zero;
     private float separationTimer;
+
     private readonly Collider[] neighborBuffer = new Collider[10];
 
     private void Awake()
@@ -32,6 +34,7 @@ public class EnemyMovement : MonoBehaviour
         enemyCore = GetComponent<Enemy>();
         separationTimer = Random.Range(0f, separationUpdateInterval);
         SetupRigidbody();
+        sqtrStopDistance = stopDistance * stopDistance;
     }
 
     private void SetupRigidbody()
@@ -54,7 +57,7 @@ public class EnemyMovement : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
         if (enemyCore.IsDead || enemyCore.PlayerTransform == null)
         {
@@ -68,13 +71,13 @@ public class EnemyMovement : MonoBehaviour
             return;
         }
 
-        CalculateSeparationForceLowFreq();
+        //CalculateSeparationForceLowFreq();
         MoveTowardsPlayer();
     }
 
     private void CalculateSeparationForceLowFreq()
     {
-        separationTimer -= Time.fixedDeltaTime;
+        separationTimer -= Time.deltaTime;
         if (separationTimer > 0f)
         {
             return;
@@ -126,7 +129,7 @@ public class EnemyMovement : MonoBehaviour
 
     private void HandleKnockback()
     {
-        knockbackTimer -= Time.fixedDeltaTime;
+        knockbackTimer -= Time.deltaTime;
 
         if (knockbackTimer <= 0.4f)
         {
@@ -151,10 +154,10 @@ public class EnemyMovement : MonoBehaviour
         if (desiredDirection.sqrMagnitude > 0.01f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(desiredDirection);
-            rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, 10f * Time.fixedDeltaTime));
+            rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, 10f * Time.deltaTime));
         }
 
-        if (sqrDist > stopDistance * stopDistance)
+        if (sqrDist > sqtrStopDistance)
         {
             float speed = enemyCore.CurrentMoveSpeed;
             Vector3 finalVelocity = (desiredDirection * speed) + currentSeparationForce;

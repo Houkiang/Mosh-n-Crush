@@ -26,6 +26,7 @@ public class Enemy : MonoBehaviour, ICombatant
     private StatusController statusController;
 
     public Transform CombatTransform => transform;
+    public Collider EnemyCollider => enemyCollider;
     public bool IsAlive => !isDead && gameObject.activeSelf;
     public StatCollection Stats => stats;
     public float CurrentDamage => GetAttackPowerForDamageType();

@@ -6,17 +6,17 @@ using UnityEngine.Rendering;
 public class EnemyHitFlash : MonoBehaviour
 {
     private const string OverlayMaterialResourcePath = "Materials/EnemyHitFlashOverlay";
+    private static readonly int BaseColorPropertyId = Shader.PropertyToID("_BaseColor");
 
-    [Header("受击闪白")]
+    [Header("Hit Flash")]
     [SerializeField] private Color flashColor = Color.white;
     [SerializeField] private float flashDuration = 0.1f;
     [SerializeField] private float flashAlpha = 0.85f;
 
     private readonly List<OverlayTarget> overlayTargets = new List<OverlayTarget>();
+    private static Material sharedOverlayMaterial;
     private bool isFlashing;
     private float flashTimer;
-    private static Material sharedOverlayMaterial;
-    private static readonly int BaseColorPropertyId = Shader.PropertyToID("_BaseColor");
 
     private void Awake()
     {
@@ -26,7 +26,11 @@ public class EnemyHitFlash : MonoBehaviour
 
     private void OnEnable()
     {
-        ResetFlashState();
+        if (!isFlashing)
+        {
+            ResetFlashState();
+            enabled = false;
+        }
     }
 
     private void OnDisable()
@@ -36,11 +40,6 @@ public class EnemyHitFlash : MonoBehaviour
 
     private void Update()
     {
-        if (!isFlashing)
-        {
-            return;
-        }
-
         flashTimer -= Time.deltaTime;
         float intensity = flashDuration > 0.0001f
             ? Mathf.Clamp01(flashTimer / flashDuration)
@@ -51,6 +50,7 @@ public class EnemyHitFlash : MonoBehaviour
         if (flashTimer <= 0f)
         {
             ResetFlashState();
+            enabled = false;
         }
     }
 
@@ -69,6 +69,12 @@ public class EnemyHitFlash : MonoBehaviour
 
         flashTimer = Mathf.Max(0.01f, flashDuration);
         isFlashing = true;
+
+        if (!enabled)
+        {
+            enabled = true;
+        }
+
         SetOverlayIntensity(1f);
     }
 
@@ -79,17 +85,11 @@ public class EnemyHitFlash : MonoBehaviour
             return;
         }
 
-        Material templateMaterial = Resources.Load<Material>(OverlayMaterialResourcePath);
-        if (templateMaterial == null)
+        sharedOverlayMaterial = Resources.Load<Material>(OverlayMaterialResourcePath);
+        if (sharedOverlayMaterial == null)
         {
             Debug.LogWarning($"EnemyHitFlash overlay material not found at Resources/{OverlayMaterialResourcePath}.");
-            return;
         }
-
-        sharedOverlayMaterial = new Material(templateMaterial)
-        {
-            name = templateMaterial.name + "_Runtime"
-        };
     }
 
     private void BuildOverlayTargets()
@@ -115,12 +115,8 @@ public class EnemyHitFlash : MonoBehaviour
 
     private void TryCreateSkinnedOverlay(SkinnedMeshRenderer sourceRenderer)
     {
-        if (sourceRenderer == null || sourceRenderer.sharedMesh == null)
-        {
-            return;
-        }
-
-        if (sourceRenderer.GetComponent<EnemyHitFlashOverlayMarker>() != null)
+        if (sourceRenderer == null || sourceRenderer.sharedMesh == null ||
+            sourceRenderer.GetComponent<EnemyHitFlashOverlayMarker>() != null)
         {
             return;
         }
@@ -131,31 +127,14 @@ public class EnemyHitFlash : MonoBehaviour
             return;
         }
 
-        GameObject overlayObject = new GameObject(sourceRenderer.gameObject.name + "_HitFlash");
-        overlayObject.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-        overlayObject.transform.SetParent(sourceRenderer.transform, false);
-        overlayObject.AddComponent<EnemyHitFlashOverlayMarker>();
-
+        GameObject overlayObject = CreateOverlayObject(sourceRenderer.gameObject.name, sourceRenderer.transform);
         SkinnedMeshRenderer overlayRenderer = overlayObject.AddComponent<SkinnedMeshRenderer>();
         overlayRenderer.sharedMesh = sourceRenderer.sharedMesh;
         overlayRenderer.rootBone = sourceRenderer.rootBone;
         overlayRenderer.bones = sourceRenderer.bones;
         overlayRenderer.localBounds = sourceRenderer.localBounds;
-        overlayRenderer.updateWhenOffscreen = true;
-        overlayRenderer.shadowCastingMode = ShadowCastingMode.Off;
-        overlayRenderer.receiveShadows = false;
-        overlayRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
-        overlayRenderer.lightProbeUsage = LightProbeUsage.Off;
-        overlayRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-        overlayRenderer.allowOcclusionWhenDynamic = false;
-        overlayRenderer.enabled = false;
-        overlayRenderer.sharedMaterials = CreateOverlayMaterialArray(sourceMaterials.Length);
-
-        overlayTargets.Add(new OverlayTarget
-        {
-            Renderer = overlayRenderer,
-            PropertyBlock = new MaterialPropertyBlock()
-        });
+        overlayRenderer.updateWhenOffscreen = false;
+        ConfigureOverlayRenderer(overlayRenderer, sourceMaterials.Length);
     }
 
     private void TryCreateMeshOverlay(MeshRenderer sourceRenderer)
@@ -165,40 +144,44 @@ public class EnemyHitFlash : MonoBehaviour
             return;
         }
 
-        MeshFilter meshFilter = sourceRenderer.GetComponent<MeshFilter>();
-        if (meshFilter == null || meshFilter.sharedMesh == null)
-        {
-            return;
-        }
-
+        MeshFilter sourceFilter = sourceRenderer.GetComponent<MeshFilter>();
         Material[] sourceMaterials = sourceRenderer.sharedMaterials;
-        if (sourceMaterials == null || sourceMaterials.Length == 0)
+        if (sourceFilter == null || sourceFilter.sharedMesh == null || sourceMaterials == null || sourceMaterials.Length == 0)
         {
             return;
         }
 
-        GameObject overlayObject = new GameObject(sourceRenderer.gameObject.name + "_HitFlash");
-        overlayObject.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-        overlayObject.transform.SetParent(sourceRenderer.transform, false);
-        overlayObject.AddComponent<EnemyHitFlashOverlayMarker>();
-
-        MeshFilter overlayFilter = overlayObject.AddComponent<MeshFilter>();
-        overlayFilter.sharedMesh = meshFilter.sharedMesh;
-
+        GameObject overlayObject = CreateOverlayObject(sourceRenderer.gameObject.name, sourceRenderer.transform);
+        overlayObject.AddComponent<MeshFilter>().sharedMesh = sourceFilter.sharedMesh;
         MeshRenderer overlayRenderer = overlayObject.AddComponent<MeshRenderer>();
+        ConfigureOverlayRenderer(overlayRenderer, sourceMaterials.Length);
+    }
+
+    private GameObject CreateOverlayObject(string sourceName, Transform sourceTransform)
+    {
+        GameObject overlayObject = new GameObject(sourceName + "_HitFlash");
+        overlayObject.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+        overlayObject.transform.SetParent(sourceTransform, false);
+        overlayObject.AddComponent<EnemyHitFlashOverlayMarker>();
+        return overlayObject;
+    }
+
+    private void ConfigureOverlayRenderer(Renderer overlayRenderer, int materialCount)
+    {
         overlayRenderer.shadowCastingMode = ShadowCastingMode.Off;
         overlayRenderer.receiveShadows = false;
         overlayRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
         overlayRenderer.lightProbeUsage = LightProbeUsage.Off;
         overlayRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         overlayRenderer.allowOcclusionWhenDynamic = false;
+        overlayRenderer.sharedMaterials = CreateOverlayMaterialArray(materialCount);
         overlayRenderer.enabled = false;
-        overlayRenderer.sharedMaterials = CreateOverlayMaterialArray(sourceMaterials.Length);
 
         overlayTargets.Add(new OverlayTarget
         {
             Renderer = overlayRenderer,
-            PropertyBlock = new MaterialPropertyBlock()
+            PropertyBlock = new MaterialPropertyBlock(),
+            MaterialCount = materialCount
         });
     }
 
@@ -215,9 +198,10 @@ public class EnemyHitFlash : MonoBehaviour
 
     private void SetOverlayIntensity(float intensity)
     {
-        float clampedIntensity = Mathf.Clamp01(intensity) * Mathf.Clamp01(flashAlpha);
+        float alpha = Mathf.Clamp01(intensity) * Mathf.Clamp01(flashAlpha);
         Color overlayColor = flashColor;
-        overlayColor.a *= clampedIntensity;
+        overlayColor.a *= alpha;
+        bool visible = overlayColor.a > 0.001f;
 
         for (int i = 0; i < overlayTargets.Count; i++)
         {
@@ -227,27 +211,17 @@ public class EnemyHitFlash : MonoBehaviour
                 continue;
             }
 
-            bool visible = overlayColor.a > 0.001f;
             target.Renderer.enabled = visible;
             if (!visible)
             {
                 continue;
             }
 
-            MaterialPropertyBlock block = target.PropertyBlock;
-            block.Clear();
-            block.SetColor(BaseColorPropertyId, overlayColor);
-
-            int materialCount = target.Renderer.sharedMaterials != null ? target.Renderer.sharedMaterials.Length : 0;
-            if (materialCount <= 0)
+            target.PropertyBlock.Clear();
+            target.PropertyBlock.SetColor(BaseColorPropertyId, overlayColor);
+            for (int materialIndex = 0; materialIndex < target.MaterialCount; materialIndex++)
             {
-                target.Renderer.SetPropertyBlock(block);
-                continue;
-            }
-
-            for (int materialIndex = 0; materialIndex < materialCount; materialIndex++)
-            {
-                target.Renderer.SetPropertyBlock(block, materialIndex);
+                target.Renderer.SetPropertyBlock(target.PropertyBlock, materialIndex);
             }
         }
     }
@@ -266,10 +240,11 @@ public class EnemyHitFlash : MonoBehaviour
         }
     }
 
-    private class OverlayTarget
+    private sealed class OverlayTarget
     {
         public Renderer Renderer;
         public MaterialPropertyBlock PropertyBlock;
+        public int MaterialCount;
     }
 }
 

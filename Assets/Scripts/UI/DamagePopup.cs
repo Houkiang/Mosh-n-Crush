@@ -31,7 +31,7 @@ public class DamagePopup : MonoBehaviour
     {
         this.cachedCameraTransform = cameraTransform; // 保存引用
 
-        textMesh.text = Mathf.RoundToInt(damageAmount).ToString();
+        textMesh.SetText("{0}", Mathf.RoundToInt(damageAmount));
 
         if (isCritical)
         {

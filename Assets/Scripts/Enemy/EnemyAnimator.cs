@@ -17,12 +17,14 @@ public class EnemyAnimator : MonoBehaviour
     [SerializeField] private string hitParamName = "Hit";
     [SerializeField] private string dieParamName = "Die";
     [SerializeField] private float deathDelay = 1.0f;
+    [SerializeField] private float animSpeedUpdateDelay = 0.5f; // 更新动画速度的间隔
 
     // 哈希缓存
     private int speedHash;
     private int attackHash;
     private int hitHash;
     private int dieHash;
+    private float animSpeedUpdateTimer = 0f;
 
     private void Awake()
     {
@@ -69,7 +71,16 @@ public class EnemyAnimator : MonoBehaviour
     {
         if (enemyCore.IsDead) return;
 
-        UpdateMovementAnimation();
+        if(animSpeedUpdateTimer <= 0f )
+        {
+            UpdateMovementAnimation();
+            animSpeedUpdateTimer = animSpeedUpdateDelay;
+            
+        }
+        else
+        {
+            animSpeedUpdateTimer -= Time.deltaTime;
+        }
     }
 
     private void UpdateMovementAnimation()
